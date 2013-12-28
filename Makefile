@@ -1,9 +1,9 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3
-LDFLAGS = -O3
+LDFLAGS = -O3 -lglut -lGL -lm
 TARGETS = voronoi
 
-voronoi: main.o heap.o
+voronoi: main.o voronoi.o geometry.o heap.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 %.o: %.c
