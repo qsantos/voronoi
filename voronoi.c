@@ -139,7 +139,8 @@ char voronoi_step(voronoi_t* v)
 		if (l->prev != NULL)
 		{
 			point_t q;
-			intersection(&q, &l->prev->p, &l->p, v->sweepline);
+			if (!intersection(&q, &l->prev->p, &l->p, v->sweepline))
+				continue;
 			if (p.y < q.y)
 				continue;
 		}
@@ -148,7 +149,8 @@ char voronoi_step(voronoi_t* v)
 		if (l->next != NULL)
 		{
 			point_t q;
-			intersection(&q, &l->p, &l->next->p, v->sweepline);
+			if (!intersection(&q, &l->p, &l->next->p, v->sweepline))
+				continue;
 			if (p.y > q.y)
 				continue;
 		}

@@ -47,7 +47,7 @@ delta = b^2 - 4ac
 
 We have: y = (-b +- sqrt(delta)) / (2a)
 */
-void intersection(point_t* dst, point_t* f1, point_t* f2, float p)
+char intersection(point_t* dst, point_t* f1, point_t* f2, float p)
 {
 	point_t* f = f1;
 
@@ -71,11 +71,14 @@ void intersection(point_t* dst, point_t* f1, point_t* f2, float p)
 		float c = d1*r - d2;
 		float delta = b*b - 4*a*c;
 
+		if (delta < 0)
+			return 0;
 		dst->y = (-b + sqrt(delta)) / (2*a);
 	}
 
 	float t = dst->y-f->y;
 	dst->x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
+	return 1;
 }
 
 /*
