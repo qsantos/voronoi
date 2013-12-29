@@ -1,4 +1,5 @@
 #include <GL/freeglut.h>
+#include <math.h>
 
 #include "voronoi.h"
 
@@ -30,8 +31,8 @@ static void draw_parabola(point_t* f, float p, float y1, float y2)
 		return;
 	}
 
-	if (y2 < 0 || y1 > 20)
-		return;
+	y1 = fmax(y1, 0);
+	y2 = fmin(y2, 20);
 
 	for (float y = y1; y < y2; y+=0.1)
 	{
