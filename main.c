@@ -52,10 +52,10 @@ static void cb_display(void)
 		glVertex2f(points[i].x, points[i].y);
 	glEnd();
 
-	// beach
+	// arc
 	glColor4ub(255, 0, 0, 255);
 	glBegin(GL_LINE_STRIP);
-	for (beach_t* l = v.front; l; l = l->next)
+	for (arc_t* l = v.front; l; l = l->next)
 	{
 		float y1 =  0;
 		float y2 = 20;
@@ -63,19 +63,19 @@ static void cb_display(void)
 		if (l->prev != NULL)
 		{
 			point_t p;
-			intersection(&p, &l->prev->p, &l->p, v.sweepline);
+			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
 			l->s1->b = p;
 			y1 = p.y;
 		}
 		if (l->next != NULL)
 		{
 			point_t p;
-			intersection(&p, &l->p, &l->next->p, v.sweepline);
+			intersection(&p, &l->r->p, &l->next->r->p, v.sweepline);
 			l->s2->b = p;
 			y2 = p.y;
 		}
 
-		draw_parabola(&l->p, v.sweepline, y1, y2);
+		draw_parabola(&l->r->p, v.sweepline, y1, y2);
 	}
 	glEnd();
 
@@ -169,6 +169,15 @@ int main(int argc, char** argv)
 	{
 		voronoi_end(&v);
 	}
+
+	size_t m = 0;
+	for (size_t i = 0; i < v.n_regions; i++)
+	{
+		size_t n = v.regions[i]->n_edges;
+		if (n > m)
+			m = n;
+	}
+	printf("%zu\n", m);
 
 	voronoi_exit(&v);
 	free(points);

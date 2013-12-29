@@ -4,19 +4,29 @@
 #include "heap.h"
 #include "geometry.h"
 
-typedef struct beach   beach_t;
+typedef struct region  region_t;
+typedef struct arc     arc_t;
 typedef struct event   event_t;
 typedef struct voronoi voronoi_t;
 
-struct beach
+struct region
 {
+	// site
 	point_t p;
+
+	size_t     n_edges;
+	segment_t* edges;
+};
+
+struct arc
+{
+	region_t* r;
 
 	segment_t* s1;
 	segment_t* s2;
 
-	beach_t* next;
-	beach_t* prev;
+	arc_t* next;
+	arc_t* prev;
 
 	event_t* e;
 };
@@ -27,15 +37,22 @@ struct event
 	char is_circle;
 	char active;
 
-	point_t p; // vertex
-	beach_t* l; // circle info
+	region_t* r;
+
+	// circle info
+	point_t p;
+	arc_t* l;
 };
 
 struct voronoi
 {
-	heap_t   events;
-	beach_t* front;
-	float    sweepline;
+	size_t     n_regions;
+	size_t     a_regions;
+	region_t** regions;
+
+	heap_t events;
+	arc_t* front;
+	float  sweepline;
 
 	size_t      n_segments;
 	size_t      a_segments;
