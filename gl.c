@@ -129,7 +129,7 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	}
 	else if (c == '\r')
 	{
-		while (voronoi_step(&v));
+		voronoi_do(&v);
 	}
 	else if (c == 'a')
 	{

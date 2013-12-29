@@ -196,3 +196,7 @@ char voronoi_step(voronoi_t* v)
 
 	return 1;
 }
+void voronoi_do(voronoi_t* v)
+{
+	while (voronoi_step(v));
+}
