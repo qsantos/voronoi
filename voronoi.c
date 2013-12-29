@@ -43,7 +43,7 @@ static void push_circle(voronoi_t* v, beach_t* l)
 	if (l == NULL)
 		return;
 
-	if (l->e && l->e->p.x != v->sweepline)
+	if (l->e != NULL && l->e->p.x != v->sweepline)
 		l->e->active = 0;
 	l->e = NULL;
 
@@ -56,13 +56,9 @@ static void push_circle(voronoi_t* v, beach_t* l)
 	if (!circle_from3(&e->p, &r, &l->prev->p, &l->p, &l->next->p))
 		return;
 
-	float idx = e->p.x + r;
-	if (idx < v->sweepline)
-		return;
-
 	e->is_circle = 1;
 	e->l = l;
-	heap_insert(&v->events, idx, e);
+	heap_insert(&v->events, e->p.x + r, e);
 	l->e = e;
 }
 static segment_t* new_segment(voronoi_t* v, point_t p)
@@ -80,8 +76,9 @@ static segment_t* new_segment(voronoi_t* v, point_t p)
 }
 char voronoi_step(voronoi_t* v)
 {
+	float idx = 0;
 	if (v->events.size != 0)
-		v->sweepline = v->events.tree[0].idx;
+		idx = v->events.tree[0].idx;
 
 	event_t* e = heap_remove(&v->events);
 	if (e == NULL)
@@ -89,6 +86,8 @@ char voronoi_step(voronoi_t* v)
 
 	if (!e->active)
 		return 1;
+
+	v->sweepline = idx;
 
 	if (e->is_circle)
 	{
