@@ -14,6 +14,8 @@ void voronoi_init(voronoi_t* v)
 
 void voronoi_exit(voronoi_t* v)
 {
+	for (size_t i = 0; i < v->n_segments; i++)
+		free(v->segments[i]);
 	free(v->segments);
 	beach_t* l = v->front;
 	while (l)
@@ -22,6 +24,9 @@ void voronoi_exit(voronoi_t* v)
 		free(l);
 		l = next;
 	}
+	event_t* e;
+	while ((e = heap_remove(&v->events)) != NULL)
+		free(e);
 	heap_exit(&v->events);
 }
 
@@ -85,7 +90,10 @@ char voronoi_step(voronoi_t* v)
 		return 0;
 
 	if (!e->active)
+	{
+		free(e);
 		return 1;
+	}
 
 	v->sweepline = idx;
 
@@ -112,6 +120,9 @@ char voronoi_step(voronoi_t* v)
 			l->prev->s2 = s;
 		if (l->next != NULL)
 			l->next->s1 = s;
+
+		free(l);
+		free(e);
 		return 1;
 	}
 
@@ -125,6 +136,7 @@ char voronoi_step(voronoi_t* v)
 		a->s2 = NULL;
 		a->e = NULL;
 		v->front = a;
+		free(e);
 		return 1;
 	}
 
@@ -158,7 +170,10 @@ char voronoi_step(voronoi_t* v)
 	}
 
 	if (l == NULL)
+	{
+		free(e);
 		return 1;
+	}
 
 	// insert arc
 	beach_t* a = CALLOC(beach_t, 1);
@@ -194,6 +209,7 @@ char voronoi_step(voronoi_t* v)
 	a->s2 = s2;
 	b->s1 = s2;
 
+	free(e);
 	return 1;
 }
 void voronoi_do(voronoi_t* v)
