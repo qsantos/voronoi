@@ -75,7 +75,6 @@ static segment_t* new_segment(voronoi_t* v, point_t p)
 	segment_t* s = CALLOC(segment_t, 1);
 	s->a = p;
 	s->b = p;
-	s->done = 0;
 	v->segments[v->n_segments++] = s;
 	return s;
 }
@@ -96,8 +95,8 @@ char voronoi_step(voronoi_t* v)
 		beach_t* l = e->l;
 
 		// finish segments
-		if (l->s1 && !l->s1->done) {l->s1->b = e->p;l->s1->done=1;};
-		if (l->s2 && !l->s2->done) {l->s2->b = e->p;l->s2->done=1;};
+		if (l->s1) l->s1->b = e->p;
+		if (l->s2) l->s2->b = e->p;
 
 		// merge points
 		if (l->prev != NULL)
