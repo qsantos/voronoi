@@ -53,7 +53,7 @@ static void cb_display(void)
 
 	glColor4ub(255, 0, 0, 255);
 	glBegin(GL_LINE_STRIP);
-	for (point_list_t* l = v.front; l; l = l->next)
+	for (beach_t* l = v.front; l; l = l->next)
 	{
 		float y1 =  0;
 		float y2 = 20;
@@ -77,7 +77,7 @@ static void cb_display(void)
 
 	glColor4ub(255, 255, 255, 255);
 	glBegin(GL_POINTS);
-	for (point_list_t* l = v.front; l; l = l->next)
+	for (beach_t* l = v.front; l; l = l->next)
 	{
 		if (l->prev == NULL)
 			continue;
@@ -85,6 +85,16 @@ static void cb_display(void)
 		point_t p;
 		intersection(&p, &l->prev->p, &l->p, v.sweepline);
 		glVertex2f(p.x, p.y);
+	}
+	glEnd();
+
+	glColor4ub(255, 255, 255, 255);
+	glBegin(GL_LINES);
+	for (size_t i = 0; i < v.n_segments; i++)
+	{
+		segment_t* s = v.segments[i];
+		glVertex2f(s->a.x, s->a.y);
+		glVertex2f(s->b.x, s->b.y);
 	}
 	glEnd();
 

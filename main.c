@@ -4,7 +4,7 @@
 #include "voronoi.h"
 
 voronoi_t v;
-point_t points[10];
+point_t points[20];
 size_t n_points;
 
 #include "gl.c"
@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 	voronoi_init(&v);
 
 	srand(37);
-	for (size_t i = 0; i < 10; i++)
+	for (size_t i = 0; i < n_points; i++)
 	{
 		points[i].x = ( (float) rand() / INT_MAX ) * 20;
 		points[i].y = ( (float) rand() / INT_MAX ) * 20;

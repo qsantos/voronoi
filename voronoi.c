@@ -5,16 +5,20 @@
 void voronoi_init(voronoi_t* v)
 {
 	heap_init(&v->events);
-	v->front = NULL;
-	v->sweepline = 0;
+	v->front      = NULL;
+	v->sweepline  = 0;
+	v->n_segments = 0;
+	v->a_segments = 0;
+	v->segments   = NULL;
 }
 
 void voronoi_exit(voronoi_t* v)
 {
-	point_list_t* l = v->front;
+	free(v->segments);
+	beach_t* l = v->front;
 	while (l)
 	{
-		point_list_t* next = l->next;
+		beach_t* next = l->next;
 		free(l);
 		l = next;
 	}
@@ -34,7 +38,7 @@ void voronoi_points(voronoi_t* v, size_t n, point_t* p)
 		voronoi_point(v, *p);
 }
 
-static void push_circle(voronoi_t* v, point_list_t* l)
+static void push_circle(voronoi_t* v, beach_t* l)
 {
 	if (l == NULL)
 		return;
@@ -61,6 +65,20 @@ static void push_circle(voronoi_t* v, point_list_t* l)
 	heap_insert(&v->events, idx, e);
 	l->e = e;
 }
+static segment_t* new_segment(voronoi_t* v, point_t p)
+{
+	if (v->n_segments == v->a_segments)
+	{
+		v->a_segments = v->a_segments == 0 ? 1 : 2*v->a_segments;
+		v->segments = CREALLOC(v->segments, segment_t*, v->a_segments);
+	}
+	segment_t* s = CALLOC(segment_t, 1);
+	s->a = p;
+	s->b = p;
+	s->done = 0;
+	v->segments[v->n_segments++] = s;
+	return s;
+}
 void voronoi_step(voronoi_t* v)
 {
 	v->sweepline = v->events.tree[0].idx;
@@ -72,7 +90,11 @@ void voronoi_step(voronoi_t* v)
 
 	if (e->is_circle)
 	{
-		point_list_t* l = e->l;
+		beach_t* l = e->l;
+
+		// finish segments
+		if (l->s1 && !l->s1->done) {l->s1->b = e->p;l->s1->done=1;};
+		if (l->s2 && !l->s2->done) {l->s2->b = e->p;l->s2->done=1;};
 
 		// merge points
 		if (l->prev != NULL)
@@ -84,12 +106,17 @@ void voronoi_step(voronoi_t* v)
 		push_circle(v, l->prev);
 		push_circle(v, l->next);
 
+		segment_t* s = new_segment(v, e->p);
+		if (l->prev != NULL)
+			l->prev->s2 = s;
+		if (l->next != NULL)
+			l->next->s1 = s;
 		return;
 	}
 
 	if (v->front == NULL)
 	{
-		point_list_t* a = CALLOC(point_list_t, 1);
+		beach_t* a = CALLOC(beach_t, 1);
 		a->p = e->p;
 		a->next = NULL;
 		a->prev = NULL;
@@ -101,7 +128,7 @@ void voronoi_step(voronoi_t* v)
 	}
 
 	point_t p;
-	point_list_t* l = v->front;
+	beach_t* l = v->front;
 	for (; l; l = l->next)
 	{
 		// intersection with i-th arc
@@ -128,8 +155,8 @@ void voronoi_step(voronoi_t* v)
 	}
 
 	// insert arc
-	point_list_t* a = CALLOC(point_list_t, 1);
-	point_list_t* b = CALLOC(point_list_t, 1);
+	beach_t* a = CALLOC(beach_t, 1);
+	beach_t* b = CALLOC(beach_t, 1);
 
 	a->e = NULL;
 	b->e = NULL;
@@ -152,4 +179,12 @@ void voronoi_step(voronoi_t* v)
 	// insert events
 	push_circle(v, a->prev);
 	push_circle(v, a->next);
+
+	// add segment
+	segment_t* s1 = new_segment(v, p);
+	segment_t* s2 = new_segment(v, p);
+	l->s2 = s1;
+	a->s1 = s1;
+	a->s2 = s2;
+	b->s1 = s2;
 }
