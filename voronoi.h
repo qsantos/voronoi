@@ -22,7 +22,7 @@ struct arc
 {
 	region_t* r;
 
-	point_t* end;
+	size_t end;
 
 	arc_t* next;
 	arc_t* prev;
@@ -53,9 +53,9 @@ struct voronoi
 	arc_t* front;
 	float  sweepline;
 
-	size_t      n_segments;
-	size_t      a_segments;
-	segment_t** segments;
+	size_t     n_segments;
+	size_t     a_segments;
+	segment_t* segments;
 };
 
 void voronoi_init(voronoi_t* v);

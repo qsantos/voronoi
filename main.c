@@ -65,8 +65,11 @@ static void cb_display(void)
 		{
 			point_t p;
 			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
-			*l->end = p;
 			y1 = p.y;
+
+			segment_t* s = &v.segments[l->end/2];
+			if (l->end%2==0) s->a = p;
+			else             s->b = p;
 		}
 		if (l->next != NULL)
 		{
@@ -84,7 +87,7 @@ static void cb_display(void)
 	glBegin(GL_LINES);
 	for (size_t i = 0; i < v.n_segments; i++)
 	{
-		segment_t* s = v.segments[i];
+		segment_t* s = &v.segments[i];
 		glVertex2f(s->a.x, s->a.y);
 		glVertex2f(s->b.x, s->b.y);
 	}

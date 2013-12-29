@@ -19,9 +19,6 @@ void voronoi_init(voronoi_t* v)
 
 void voronoi_exit(voronoi_t* v)
 {
-	/*
-	for (size_t i = 0; i < v->n_segments; i++)
-		free(v->segments[i]);
 	free(v->segments);
 
 	arc_t* l = v->front;
@@ -31,7 +28,6 @@ void voronoi_exit(voronoi_t* v)
 		free(l);
 		l = next;
 	}
-	*/
 
 	event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
@@ -92,16 +88,19 @@ static void push_circle(voronoi_t* v, arc_t* l)
 	heap_insert(&v->events, e->p.x + r, e);
 	l->e = e;
 }
-static segment_t* new_segment(voronoi_t* v)
+static size_t new_segment(voronoi_t* v)
 {
 	if (v->n_segments == v->a_segments)
 	{
 		v->a_segments = v->a_segments == 0 ? 1 : 2*v->a_segments;
-		v->segments = CREALLOC(v->segments, segment_t*, v->a_segments);
+		v->segments = CREALLOC(v->segments, segment_t, v->a_segments);
 	}
-	segment_t* s = CALLOC(segment_t, 1);
-	v->segments[v->n_segments++] = s;
-	return s;
+	return v->n_segments++;
+}
+static point_t* id2point(voronoi_t* v, size_t id)
+{
+	segment_t* s = &v->segments[id/2];
+	return id % 2 == 0 ? &s->a : &s->b;
 }
 char voronoi_step(voronoi_t* v)
 {
@@ -126,8 +125,8 @@ char voronoi_step(voronoi_t* v)
 		arc_t* l = e->l;
 
 		// finish segments
-		*l->end = e->p;
-		*l->next->end = e->p;
+		*id2point(v, l->end) = e->p;
+		*id2point(v, l->next->end) = e->p;
 
 		// merge points
 		l->prev->next = l->next;
@@ -138,11 +137,11 @@ char voronoi_step(voronoi_t* v)
 		push_circle(v, l->next);
 
 		// start new segment
-		segment_t* s = new_segment(v);
-		s->a = e->p;
-		l->next->end = &s->b;
+		size_t s = new_segment(v);
+		*id2point(v, 2*s) = e->p;
+		l->next->end = 2*s+1;
 
-		free(l);
+//		free(l);
 		free(e);
 		return 1;
 	}
@@ -153,7 +152,7 @@ char voronoi_step(voronoi_t* v)
 		a->r = e->r;
 		a->next = NULL;
 		a->prev = NULL;
-		a->end = NULL;
+		a->end = 0;
 		a->e = NULL;
 		v->front = a;
 		free(e);
@@ -209,9 +208,9 @@ char voronoi_step(voronoi_t* v)
 	push_circle(v, a->next);
 
 	// add segment
-	segment_t* s = new_segment(v);
-	a->end = &s->a;
-	b->end = &s->b;
+	size_t s = new_segment(v);
+	a->end = 2*s;
+	b->end = 2*s+1;
 
 	free(e);
 	return 1;
@@ -226,6 +225,6 @@ void voronoi_end(voronoi_t* v)
 		point_t p;
 		intersection(&p, &l->r->p, &l->next->r->p, v->sweepline);
 		if (l->end)
-			*l->end = p;
+			*id2point(v, l->end) = p;
 	}
 }
