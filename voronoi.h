@@ -49,6 +49,6 @@ void voronoi_point (voronoi_t* v, point_t p);
 void voronoi_points(voronoi_t* v, size_t n, point_t* p);
 
 char voronoi_step(voronoi_t* v);
-void voronoi_do  (voronoi_t* v);
+void voronoi_end (voronoi_t* v);
 
 #endif

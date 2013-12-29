@@ -112,7 +112,7 @@ static void cb_keyboard(unsigned char c, int x, int y)
 			voronoi_step(&v);
 	}
 	else if (c == '\r')
-		voronoi_do(&v);
+		voronoi_end(&v);
 	else if (c == 'a')
 		for (size_t i = 0; i < 1000; i++)
 			voronoi_step(&v);
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		voronoi_do(&v);
+		voronoi_end(&v);
 	}
 
 	voronoi_exit(&v);

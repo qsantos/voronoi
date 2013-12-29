@@ -26,7 +26,10 @@ void voronoi_exit(voronoi_t* v)
 	}
 	event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
+	{
+		free(e->l);
 		free(e);
+	}
 	heap_exit(&v->events);
 }
 
@@ -212,7 +215,16 @@ char voronoi_step(voronoi_t* v)
 	free(e);
 	return 1;
 }
-void voronoi_do(voronoi_t* v)
+void voronoi_end(voronoi_t* v)
 {
 	while (voronoi_step(v));
+
+	v->sweepline += 1000;
+	for (beach_t* l = v->front; l->next; l = l->next)
+	{
+		point_t p;
+		intersection(&p, &l->p, &l->next->p, v->sweepline);
+		if (l->s1)
+			l->s1->b = p;
+	}
 }
