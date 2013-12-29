@@ -1,7 +1,8 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-typedef struct point point_t;
+typedef struct point   point_t;
+typedef struct segment segment_t;
 
 struct point
 {

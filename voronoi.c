@@ -24,7 +24,7 @@ void voronoi_exit(voronoi_t* v)
 void voronoi_point(voronoi_t* v, point_t p)
 {
 	event_t* e = CALLOC(event_t, 1);
-	*e = (event_t){0, p, NULL};
+	*e = (event_t){0, 1, p, NULL};
 	heap_insert(&v->events, p.x, e);
 }
 
@@ -36,57 +36,75 @@ void voronoi_points(voronoi_t* v, size_t n, point_t* p)
 
 static void push_circle(voronoi_t* v, point_list_t* l)
 {
+	if (l == NULL)
+		return;
+
+	if (l->e && l->e->p.x != v->sweepline)
+		l->e->active = 0;
+	l->e = NULL;
+
 	if (l == NULL || l->prev == NULL || l->next == NULL)
 		return;
 
 	event_t* e = CALLOC(event_t, 1);
+	e->active = 1;
 	float r;
 	if (!circle_from3(&e->p, &r, &l->prev->p, &l->p, &l->next->p))
 		return;
 
-	e->p.x += r;
-	if (e->p.x < v->sweepline)
+	float idx = e->p.x + r;
+	if (idx < v->sweepline)
 		return;
 
 	e->is_circle = 1;
 	e->l = l;
-
-	heap_insert(&v->events, e->p.x, e);
+	heap_insert(&v->events, idx, e);
+	l->e = e;
 }
 void voronoi_step(voronoi_t* v)
 {
+	v->sweepline = v->events.tree[0].idx;
 	event_t* e = heap_remove(&v->events);
 	if (e == NULL)
 		return;
-	v->sweepline = e->p.x;
+	if (!e->active)
+		return;
 
 	if (e->is_circle)
 	{
 		point_list_t* l = e->l;
-		if (l->prev)
+
+		// merge points
+		if (l->prev != NULL)
 			l->prev->next = l->next;
-		if (l->next)
+		if (l->next != NULL)
 			l->next->prev = l->prev;
+
+		// refresh circle events
 		push_circle(v, l->prev);
 		push_circle(v, l->next);
+
 		return;
 	}
 
 	if (v->front == NULL)
 	{
-		point_list_t* a = CREALLOC(v->front, point_list_t, 1);
+		point_list_t* a = CALLOC(point_list_t, 1);
 		a->p = e->p;
 		a->next = NULL;
 		a->prev = NULL;
+		a->s1 = NULL;
+		a->s2 = NULL;
+		a->e = NULL;
 		v->front = a;
 		return;
 	}
 
+	point_t p;
 	point_list_t* l = v->front;
 	for (; l; l = l->next)
 	{
 		// intersection with i-th arc
-		point_t p;
 		intersection(&p, &e->p, &l->p, v->sweepline);
 
 		// check for previous breakpoint
@@ -109,8 +127,12 @@ void voronoi_step(voronoi_t* v)
 		break;
 	}
 
+	// insert arc
 	point_list_t* a = CALLOC(point_list_t, 1);
 	point_list_t* b = CALLOC(point_list_t, 1);
+
+	a->e = NULL;
+	b->e = NULL;
 
 	a->next = b;
 	a->prev = l;
@@ -120,11 +142,14 @@ void voronoi_step(voronoi_t* v)
 	b->next = l->next;
 	b->p = l->p;
 
+	b->s2 = l->s2;
+
 	if (l->next)
 		l->next->prev = b;
 
 	l->next = a;
 
+	// insert events
 	push_circle(v, a->prev);
 	push_circle(v, a->next);
 }

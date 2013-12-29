@@ -14,12 +14,15 @@ struct point_list
 
 	point_list_t* next;
 	point_list_t* prev;
+
+	event_t* e;
 };
 
 struct event
 {
 	// 0 if new vertex, 1 if circle
 	char is_circle;
+	char active;
 
 	point_t p; // vertex
 	point_list_t* l; // circle info
