@@ -88,19 +88,22 @@ static void push_circle(voronoi_t* v, arc_t* l)
 	heap_insert(&v->events, e->p.x + r, e);
 	l->e = e;
 }
-static size_t new_segment(voronoi_t* v)
+static void push_segment(region_t* a, size_t e)
+{
+	a->edges = CREALLOC(a->edges, size_t, a->n_edges+1);
+	a->edges[a->n_edges++] = e;
+}
+static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
 {
 	if (v->n_segments == v->a_segments)
 	{
 		v->a_segments = v->a_segments == 0 ? 1 : 2*v->a_segments;
 		v->segments = CREALLOC(v->segments, segment_t, v->a_segments);
 	}
-	return v->n_segments++;
-}
-static point_t* id2point(voronoi_t* v, size_t id)
-{
-	segment_t* s = &v->segments[id/2];
-	return id % 2 == 0 ? &s->a : &s->b;
+	size_t id = v->n_segments++;
+	push_segment(a, id);
+	push_segment(b, id);
+	return id;
 }
 char voronoi_step(voronoi_t* v)
 {
@@ -125,8 +128,8 @@ char voronoi_step(voronoi_t* v)
 		arc_t* l = e->l;
 
 		// finish segments
-		*id2point(v, l->end) = e->p;
-		*id2point(v, l->next->end) = e->p;
+		*voronoi_id2point(v, l->end) = e->p;
+		*voronoi_id2point(v, l->next->end) = e->p;
 
 		// merge points
 		l->prev->next = l->next;
@@ -137,8 +140,8 @@ char voronoi_step(voronoi_t* v)
 		push_circle(v, l->next);
 
 		// start new segment
-		size_t s = new_segment(v);
-		*id2point(v, 2*s) = e->p;
+		size_t s = new_segment(v, l->prev->r, l->next->r);
+		*voronoi_id2point(v, 2*s) = e->p;
 		l->next->end = 2*s+1;
 
 //		free(l);
@@ -208,7 +211,7 @@ char voronoi_step(voronoi_t* v)
 	push_circle(v, a->next);
 
 	// add segment
-	size_t s = new_segment(v);
+	size_t s = new_segment(v, l->r, e->r);
 	a->end = 2*s;
 	b->end = 2*s+1;
 
@@ -225,6 +228,16 @@ void voronoi_end(voronoi_t* v)
 		point_t p;
 		intersection(&p, &l->r->p, &l->next->r->p, v->sweepline);
 		if (l->end)
-			*id2point(v, l->end) = p;
+			*voronoi_id2point(v, l->end) = p;
 	}
+}
+
+point_t* voronoi_id2point(voronoi_t* v, size_t id)
+{
+	segment_t* s = &v->segments[id/2];
+	return id % 2 == 0 ? &s->a : &s->b;
+}
+segment_t* voronoi_id2segment(voronoi_t* v, size_t id)
+{
+	return &v->segments[id];
 }

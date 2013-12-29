@@ -1,10 +1,10 @@
-#include <stdlib.h>
 #include <limits.h>
 #include <math.h>
 #include <GL/freeglut.h>
 
 #include "utils.h"
 #include "voronoi.h"
+#include "lloyd.h"
 
 voronoi_t v;
 
@@ -67,9 +67,8 @@ static void cb_display(void)
 			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
 			y1 = p.y;
 
-			segment_t* s = &v.segments[l->end/2];
-			if (l->end%2==0) s->a = p;
-			else             s->b = p;
+			point_t* q = voronoi_id2point(&v, l->end);
+			*q = p;
 		}
 		if (l->next != NULL)
 		{
@@ -114,6 +113,8 @@ static void cb_keyboard(unsigned char c, int x, int y)
 		if (v.sweepline >= v.events.tree[0].idx)
 			voronoi_step(&v);
 	}
+	else if (c == 'l')
+		lloyd_relaxation(&v);
 	else if (c == '\r')
 		voronoi_end(&v);
 	else if (c == 'a')
