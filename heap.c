@@ -89,5 +89,12 @@ void* heap_remove(heap_t* h)
 	void* ret = h->tree[0].data;
 	xchg(h, 0, --h->size);
 	sinkDown(h, 0);
+
+	if (h->size < h->avail/4)
+	{
+		h->avail /= 2;
+		h->tree = (hnode_t*) realloc(h->tree, sizeof(hnode_t)*h->avail);
+		assert(h->tree != NULL);
+	}
 	return ret;
 }
