@@ -53,7 +53,7 @@ static void cb_display(void)
 	}
 	glEnd();
 
-	// arc
+	// arcs
 	glColor4ub(255, 0, 0, 255);
 	glBegin(GL_LINE_STRIP);
 	for (arc_t* l = v.front; l; l = l->next)
@@ -66,14 +66,12 @@ static void cb_display(void)
 			point_t p;
 			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
 			*l->end = p;
-//			l->s1->b = p;
 			y1 = p.y;
 		}
 		if (l->next != NULL)
 		{
 			point_t p;
 			intersection(&p, &l->r->p, &l->next->r->p, v.sweepline);
-//			l->s2->b = p;
 			y2 = p.y;
 		}
 

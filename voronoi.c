@@ -169,9 +169,9 @@ char voronoi_step(voronoi_t* v)
 
 		// check for previous and next breakpoints
 		point_t q;
-		if (l->prev != NULL && intersection(&q, &l->prev->r->p, &l->r->p, v->sweepline) && p.y < q.y)
+		if (l->prev != NULL && (!intersection(&q, &l->prev->r->p, &l->r->p, v->sweepline) || p.y < q.y))
 			continue;
-		if (l->next != NULL && intersection(&q, &l->r->p, &l->next->r->p, v->sweepline) && p.y > q.y)
+		if (l->next != NULL && (!intersection(&q, &l->r->p, &l->next->r->p, v->sweepline) || p.y > q.y))
 			continue;
 
 		break;
