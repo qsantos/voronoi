@@ -79,14 +79,17 @@ static segment_t* new_segment(voronoi_t* v, point_t p)
 	v->segments[v->n_segments++] = s;
 	return s;
 }
-void voronoi_step(voronoi_t* v)
+char voronoi_step(voronoi_t* v)
 {
-	v->sweepline = v->events.tree[0].idx;
+	if (v->events.size != 0)
+		v->sweepline = v->events.tree[0].idx;
+
 	event_t* e = heap_remove(&v->events);
 	if (e == NULL)
-		return;
+		return 0;
+
 	if (!e->active)
-		return;
+		return 1;
 
 	if (e->is_circle)
 	{
@@ -111,7 +114,7 @@ void voronoi_step(voronoi_t* v)
 			l->prev->s2 = s;
 		if (l->next != NULL)
 			l->next->s1 = s;
-		return;
+		return 1;
 	}
 
 	if (v->front == NULL)
@@ -124,7 +127,7 @@ void voronoi_step(voronoi_t* v)
 		a->s2 = NULL;
 		a->e = NULL;
 		v->front = a;
-		return;
+		return 1;
 	}
 
 	point_t p;
@@ -187,4 +190,6 @@ void voronoi_step(voronoi_t* v)
 	a->s1 = s1;
 	a->s2 = s2;
 	b->s1 = s2;
+
+	return 1;
 }

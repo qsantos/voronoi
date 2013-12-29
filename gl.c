@@ -30,12 +30,16 @@ static void draw_parabola(point_t* f, float p, float y1, float y2)
 		return;
 	}
 
+	if (y2 < 0 || y1 > 20)
+		return;
+
 	for (float y = y1; y < y2; y+=0.1)
 	{
 		float t = y-f->y;
 		float x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
 		glVertex2f(x, y);
 	}
+
 	float t = y2-f->y;
 	float x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
 	glVertex2f(x, y2);
@@ -117,9 +121,13 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	if (c == ' ')
 	{
 		v.sweepline += 0.05;
-		if (v.sweepline < v.events.tree[0].idx)
-			return;
+		if (v.sweepline >= v.events.tree[0].idx)
+			voronoi_step(&v);
 	}
-
-	voronoi_step(&v);
+	else if (c == '\r')
+	{
+		while (voronoi_step(&v));
+	}
+	else
+		voronoi_step(&v);
 }
