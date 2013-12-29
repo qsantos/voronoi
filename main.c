@@ -64,14 +64,15 @@ static void cb_display(void)
 		{
 			point_t p;
 			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
-			l->s1->b = p;
+			*l->end = p;
+//			l->s1->b = p;
 			y1 = p.y;
 		}
 		if (l->next != NULL)
 		{
 			point_t p;
 			intersection(&p, &l->r->p, &l->next->r->p, v.sweepline);
-			l->s2->b = p;
+//			l->s2->b = p;
 			y2 = p.y;
 		}
 

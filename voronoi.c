@@ -117,30 +117,21 @@ char voronoi_step(voronoi_t* v)
 		arc_t* l = e->l;
 
 		// finish segments
-		if (l->s1) l->s1->b = e->p;
-		if (l->s2) l->s2->b = e->p;
+		*l->end = e->p;
+		*l->next->end = e->p;
 
 		// merge points
-		if (l->prev != NULL)
-			l->prev->next = l->next;
-		if (l->next != NULL)
-			l->next->prev = l->prev;
+		l->prev->next = l->next;
+		l->next->prev = l->prev;
 
 		// refresh circle events
 		push_circle(v, l->prev);
 		push_circle(v, l->next);
 
+		// start new segment
 		segment_t* s = new_segment(v, e->p);
-		if (l->prev != NULL)
-		{
-			l->prev->r->n_edges++;
-			l->prev->s2 = s;
-		}
-		if (l->next != NULL)
-		{
-			l->next->r->n_edges++;
-			l->next->s1 = s;
-		}
+		l->prev->end = &s->a;
+		l->next->end = &s->b;
 
 		free(l);
 		free(e);
@@ -153,8 +144,7 @@ char voronoi_step(voronoi_t* v)
 		a->r = e->r;
 		a->next = NULL;
 		a->prev = NULL;
-		a->s1 = NULL;
-		a->s2 = NULL;
+		a->end = NULL;
 		a->e = NULL;
 		v->front = a;
 		free(e);
@@ -211,8 +201,6 @@ char voronoi_step(voronoi_t* v)
 	b->next = l->next;
 	b->r = l->r;
 
-	b->s2 = l->s2;
-
 	if (l->next)
 		l->next->prev = b;
 
@@ -223,14 +211,9 @@ char voronoi_step(voronoi_t* v)
 	push_circle(v, a->next);
 
 	// add segment
-	segment_t* s1 = new_segment(v, p);
-	segment_t* s2 = new_segment(v, p);
-	l->s2 = s1;
-	a->s1 = s1;
-	a->s2 = s2;
-	b->s1 = s2;
-
-	a->r->n_edges++;
+	segment_t* s = new_segment(v, p);
+	a->end = &s->a;
+	b->end = &s->b;
 
 	free(e);
 	return 1;
@@ -244,7 +227,7 @@ void voronoi_end(voronoi_t* v)
 	{
 		point_t p;
 		intersection(&p, &l->r->p, &l->next->r->p, v->sweepline);
-		if (l->s1)
-			l->s1->b = p;
+		if (l->end)
+			*l->end = p;
 	}
 }

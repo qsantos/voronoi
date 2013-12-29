@@ -22,8 +22,7 @@ struct arc
 {
 	region_t* r;
 
-	segment_t* s1;
-	segment_t* s2;
+	point_t* end;
 
 	arc_t* next;
 	arc_t* prev;
