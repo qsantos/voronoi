@@ -157,6 +157,9 @@ char voronoi_step(voronoi_t* v)
 		break;
 	}
 
+	if (l == NULL)
+		return 1;
+
 	// insert arc
 	beach_t* a = CALLOC(beach_t, 1);
 	beach_t* b = CALLOC(beach_t, 1);
