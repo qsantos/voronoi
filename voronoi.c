@@ -19,9 +19,11 @@ void voronoi_init(voronoi_t* v)
 
 void voronoi_exit(voronoi_t* v)
 {
+	/*
 	for (size_t i = 0; i < v->n_segments; i++)
 		free(v->segments[i]);
 	free(v->segments);
+
 	arc_t* l = v->front;
 	while (l)
 	{
@@ -29,10 +31,16 @@ void voronoi_exit(voronoi_t* v)
 		free(l);
 		l = next;
 	}
+	*/
+
 	event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
 		free(e);
 	heap_exit(&v->events);
+
+	for (size_t i = 0; i < v->n_regions; i++)
+		free(v->regions[i]);
+	free(v->regions);
 }
 
 void voronoi_point(voronoi_t* v, point_t p)
@@ -74,14 +82,17 @@ static void push_circle(voronoi_t* v, arc_t* l)
 	e->r = l->r;
 	float r;
 	if (!circle_from3(&e->p, &r, &l->prev->r->p, &l->r->p, &l->next->r->p))
+	{
+		free(e);
 		return;
+	}
 
 	e->is_circle = 1;
 	e->l = l;
 	heap_insert(&v->events, e->p.x + r, e);
 	l->e = e;
 }
-static segment_t* new_segment(voronoi_t* v, point_t p)
+static segment_t* new_segment(voronoi_t* v)
 {
 	if (v->n_segments == v->a_segments)
 	{
@@ -89,8 +100,6 @@ static segment_t* new_segment(voronoi_t* v, point_t p)
 		v->segments = CREALLOC(v->segments, segment_t*, v->a_segments);
 	}
 	segment_t* s = CALLOC(segment_t, 1);
-	s->a = p;
-	s->b = p;
 	v->segments[v->n_segments++] = s;
 	return s;
 }
@@ -129,8 +138,8 @@ char voronoi_step(voronoi_t* v)
 		push_circle(v, l->next);
 
 		// start new segment
-		segment_t* s = new_segment(v, e->p);
-		l->prev->end = &s->a;
+		segment_t* s = new_segment(v);
+		s->a = e->p;
 		l->next->end = &s->b;
 
 		free(l);
@@ -151,39 +160,21 @@ char voronoi_step(voronoi_t* v)
 		return 1;
 	}
 
-	point_t p;
 	arc_t* l = v->front;
 	for (; l; l = l->next)
 	{
 		// intersection with i-th arc
+		point_t p;
 		intersection(&p, &e->r->p, &l->r->p, v->sweepline);
 
-		// check for previous breakpoint
-		if (l->prev != NULL)
-		{
-			point_t q;
-			if (!intersection(&q, &l->prev->r->p, &l->r->p, v->sweepline))
-				continue;
-			if (p.y < q.y)
-				continue;
-		}
+		// check for previous and next breakpoints
+		point_t q;
+		if (l->prev != NULL && intersection(&q, &l->prev->r->p, &l->r->p, v->sweepline) && p.y < q.y)
+			continue;
+		if (l->next != NULL && intersection(&q, &l->r->p, &l->next->r->p, v->sweepline) && p.y > q.y)
+			continue;
 
-		// check for next breakpoint
-		if (l->next != NULL)
-		{
-			point_t q;
-			if (!intersection(&q, &l->r->p, &l->next->r->p, v->sweepline))
-				continue;
-			if (p.y > q.y)
-				continue;
-		}
 		break;
-	}
-
-	if (l == NULL)
-	{
-		free(e);
-		return 1;
 	}
 
 	// insert arc
@@ -211,7 +202,7 @@ char voronoi_step(voronoi_t* v)
 	push_circle(v, a->next);
 
 	// add segment
-	segment_t* s = new_segment(v, p);
+	segment_t* s = new_segment(v);
 	a->end = &s->a;
 	b->end = &s->b;
 

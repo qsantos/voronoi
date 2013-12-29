@@ -7,8 +7,6 @@
 #include "voronoi.h"
 
 voronoi_t v;
-point_t* points;
-size_t n_points;
 
 static void glInit()
 {
@@ -48,8 +46,11 @@ static void cb_display(void)
 	// sites
 	glColor4ub(255, 0, 255, 255);
 	glBegin(GL_POINTS);
-	for (size_t i = 0; i < n_points; i++)
-		glVertex2f(points[i].x, points[i].y);
+	for (size_t i = 0; i < v.n_regions; i++)
+	{
+		point_t* p = &v.regions[i]->p;
+		glVertex2f(p->x, p->y);
+	}
 	glEnd();
 
 	// arc
@@ -132,7 +133,7 @@ static void cb_keyboard(unsigned char c, int x, int y)
 int main(int argc, char** argv)
 {
 	char glEnabled = 0;
-	n_points = 10000;
+	size_t n_points = 10000;
 
 	int curarg = 1;
 	if (curarg < argc)
@@ -143,17 +144,15 @@ int main(int argc, char** argv)
 		curarg++;
 	}
 
-	points = CALLOC(point_t, n_points);
+	voronoi_init(&v);
 
 	srand(42);
 	for (size_t i = 0; i < n_points; i++)
 	{
-		points[i].x = ( (float) rand() / INT_MAX ) * 20;
-		points[i].y = ( (float) rand() / INT_MAX ) * 20;
+		float x = ( (float) rand() / INT_MAX ) * 20;
+		float y = ( (float) rand() / INT_MAX ) * 20;
+		voronoi_point(&v, (point_t){x,y});
 	}
-
-	voronoi_init(&v);
-	voronoi_points(&v, n_points, points);
 
 	if (glEnabled)
 	{
@@ -171,16 +170,6 @@ int main(int argc, char** argv)
 		voronoi_end(&v);
 	}
 
-	size_t m = 0;
-	for (size_t i = 0; i < v.n_regions; i++)
-	{
-		size_t n = v.regions[i]->n_edges;
-		if (n > m)
-			m = n;
-	}
-	printf("%zu\n", m);
-
 	voronoi_exit(&v);
-	free(points);
 	return 0;
 }
