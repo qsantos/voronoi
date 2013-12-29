@@ -1,8 +1,8 @@
 #include "heap.h"
 
+#include <stdlib.h>
 #include <string.h>
-
-#include "utils.h"
+#include <assert.h>
 
 void heap_init(heap_t* h)
 {
@@ -16,6 +16,10 @@ void heap_exit(heap_t* h)
 	free(h->tree);
 }
 
+static inline int max(int a, int b)
+{
+	return a > b ? a : b;
+}
 static inline size_t parent(size_t i)
 {
 	return max(0, ((ssize_t)i+1)/2-1);
@@ -68,7 +72,8 @@ void heap_insert(heap_t* h, float idx, void* data)
 	if (h->size == h->avail)
 	{
 		h->avail = h->avail ? 2*h->avail : 1;
-		h->tree = CREALLOC(h->tree, hnode_t, h->avail);
+		h->tree = (hnode_t*) realloc(h->tree, sizeof(hnode_t)*h->avail);
+		assert(h->tree != NULL);
 	}
 
 	size_t i = h->size++;
