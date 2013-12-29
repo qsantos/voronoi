@@ -177,6 +177,13 @@ char voronoi_step(voronoi_t* v)
 		break;
 	}
 
+	if (l == NULL)
+	{
+		// TODO
+		free(e);
+		return 1;
+	}
+
 	// insert arc
 	arc_t* a = CALLOC(arc_t, 1);
 	arc_t* b = CALLOC(arc_t, 1);
