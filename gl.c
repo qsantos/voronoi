@@ -130,6 +130,11 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	{
 		while (voronoi_step(&v));
 	}
+	else if (c == '\t')
+	{
+		for (size_t i = 0; i < 100; i++)
+			voronoi_step(&v);
+	}
 	else
 		voronoi_step(&v);
 }

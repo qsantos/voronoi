@@ -33,9 +33,9 @@ struct event
 
 struct voronoi
 {
-	heap_t        events;
+	heap_t   events;
 	beach_t* front;
-	float         sweepline;
+	float    sweepline;
 
 	size_t      n_segments;
 	size_t      a_segments;
