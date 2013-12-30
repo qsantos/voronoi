@@ -16,7 +16,7 @@ static void glInit()
 	glDisable(GL_DEPTH_TEST);
 }
 
-static void draw_parabola(point_t* f, float p, float y1, float y2)
+static void draw_parabola(point_t* f, double p, double y1, double y2)
 {
 	if (f->x == p)
 	{
@@ -27,15 +27,15 @@ static void draw_parabola(point_t* f, float p, float y1, float y2)
 	y1 = fmax(y1, 0);
 	y2 = fmin(y2, 20);
 
-	for (float y = y1; y < y2; y+=0.1)
+	for (double y = y1; y < y2; y+=0.1)
 	{
-		float t = y-f->y;
-		float x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
+		double t = y-f->y;
+		double x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
 		glVertex2f(x, y);
 	}
 
-	float t = y2-f->y;
-	float x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
+	double t = y2-f->y;
+	double x = (f->x*f->x - p*p + t*t) / (2*(f->x-p));
 	glVertex2f(x, y2);
 }
 
@@ -58,8 +58,8 @@ static void cb_display(void)
 	glBegin(GL_LINE_STRIP);
 	for (arc_t* l = v.front; l; l = l->next)
 	{
-		float y1 =  0;
-		float y2 = 20;
+		double y1 =  0;
+		double y2 = 20;
 
 		if (l->prev != NULL)
 		{
@@ -158,8 +158,8 @@ int main(int argc, char** argv)
 	srand(42);
 	for (size_t i = 0; i < n_points; i++)
 	{
-		float x = ( (float) rand() / INT_MAX ) * 20;
-		float y = ( (float) rand() / INT_MAX ) * 20;
+		double x = ( (double) rand() / INT_MAX ) * 20;
+		double y = ( (double) rand() / INT_MAX ) * 20;
 		voronoi_point(&v, (point_t){x,y});
 	}
 

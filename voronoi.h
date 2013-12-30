@@ -53,7 +53,7 @@ struct voronoi
 
 	heap_t events;
 	arc_t* front;
-	float  sweepline;
+	double  sweepline;
 
 	size_t     n_segments;
 	size_t     a_segments;

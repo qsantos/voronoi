@@ -8,7 +8,7 @@ typedef struct heap  heap_t;
 
 struct hnode
 {
-	float idx;
+	double idx;
 	void* data;
 };
 
@@ -22,7 +22,7 @@ struct heap
 void heap_init(heap_t* h);
 void heap_exit(heap_t* h);
 
-void  heap_insert(heap_t* h, float idx, void* data);
+void  heap_insert(heap_t* h, double idx, void* data);
 void* heap_remove(heap_t* h);
 
 #endif

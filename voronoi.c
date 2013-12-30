@@ -80,7 +80,7 @@ static void push_circle(voronoi_t* v, arc_t* l)
 	event_t* e = CALLOC(event_t, 1);
 	e->active = 1;
 	e->r = l->r;
-	float r;
+	double r;
 	if (!circle_from3(&e->p, &r, &l->prev->r->p, &l->r->p, &l->next->r->p))
 	{
 		free(e);
@@ -111,7 +111,7 @@ static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
 }
 char voronoi_step(voronoi_t* v)
 {
-	float idx = 0;
+	double idx = 0;
 	if (v->events.size != 0)
 		idx = v->events.tree[0].idx;
 

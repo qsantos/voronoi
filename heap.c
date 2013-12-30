@@ -67,7 +67,7 @@ static void sinkDown(heap_t* h, size_t i)
 	}
 }
 
-void heap_insert(heap_t* h, float idx, void* data)
+void heap_insert(heap_t* h, double idx, void* data)
 {
 	if (h->size == h->avail)
 	{

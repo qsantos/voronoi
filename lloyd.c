@@ -1,12 +1,11 @@
-#include <stdio.h>
 #include "lloyd.h"
 
 #include <stdlib.h>
 #include <math.h>
 
-static float heading(point_t p)
+static double heading(point_t p)
 {
-	float dir;
+	double dir;
 	if (p.x > 0)
 	{
 		dir = atan(p.y / p.x);
@@ -30,8 +29,8 @@ static int poly_vert(const void* a, const void* b, void* arg)
 	const point_t* pa = (const point_t*) a;
 	const point_t* pb = (const point_t*) b;
 	point_t* c = (point_t*) arg;
-	float da = heading((point_t){pa->x-c->x, pa->y-c->y});
-	float db = heading((point_t){pb->x-c->x, pb->y-c->y});
+	double da = heading((point_t){pa->x-c->x, pa->y-c->y});
+	double db = heading((point_t){pb->x-c->x, pb->y-c->y});
 	return da < db ? -1 : da > db ? +1 : 0;
 }
 void lloyd_relaxation(voronoi_t* v)
@@ -67,20 +66,20 @@ void lloyd_relaxation(voronoi_t* v)
 		// order vertices
 		qsort_r(v2, 2*r->n_edges, sizeof(point_t), poly_vert, &mean);
 
-		// filter out doubles
+		// filter out multiple points
 		point_t v[r->n_edges];
 		for (size_t j = 0; j < r->n_edges; j++)
 			v[j] = v2[2*j];
 
 		// compute centroid
-		float x = 0;
-		float y = 0;
-		float A = 0;
+		double x = 0;
+		double y = 0;
+		double A = 0;
 		for (size_t i=0, j=r->n_edges-1; i < r->n_edges; j=i++)
 		{
 			point_t p = v[j];
 			point_t q = v[i];
-			float f = p.x*q.y - q.x*p.y;
+			double f = p.x*q.y - q.x*p.y;
 			x += (p.x+q.x)*f;
 			y += (p.y+q.y)*f;
 			A += f;
