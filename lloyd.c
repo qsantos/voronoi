@@ -88,9 +88,12 @@ void lloyd_relaxation(voronoi_t* v)
 		if (fabs(A) > 100)
 			continue;
 
-		npoints[k].x = x;
-		npoints[k].y = y;
-		k++;
+		if (0 <= x && x <= 20 && 0 <= y && y <= 20)
+		{
+			npoints[k].x = x;
+			npoints[k].y = y;
+			k++;
+		}
 	}
 	voronoi_exit(v);
 	voronoi_init(v);
