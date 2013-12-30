@@ -2,6 +2,16 @@
 
 #include <math.h>
 
+point_t point_minus(point_t a, point_t b)
+{
+	return (point_t){a.x-b.x,a.y-b.y};
+}
+
+float point_cross(point_t a, point_t b)
+{
+	return a.x*b.y - a.y*b.x;
+}
+
 /*
 Parabolas are defined as being the set of points equidistant from a
 vertex (focus) and a line (directrix). It is exactly what we need for
@@ -139,4 +149,28 @@ char circle_from3(point_t* c, float* r, point_t* p1, point_t* p2, point_t* p3)
 	// o.x plus radius equals max x coordinate.
 	*r = sqrt( pow(p1->x-c->x, 2) + pow(p1->y-c->y, 2) );
 	return 1;
+}
+
+// http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+char segment_intersect(point_t* dst, segment_t* a, segment_t* b)
+{
+	point_t p = a->a;
+	point_t r = point_minus(a->b,p);
+	point_t q = b->a;
+	point_t s = point_minus(b->b,q);
+
+	float y = point_cross(r, s);
+	if (y != 0)
+	{
+		point_t m = point_minus(q, p);
+		float t = point_cross(m, s) / y;
+		float u = point_cross(m, r) / y;
+		if (0 <= t && t <= 1 && 0 <= u && u <= 1)
+		{
+			dst->x = p.x + t*r.x;
+			dst->y = p.y + t*r.y;
+			return 1;
+		}
+	}
+	return 0;
 }
