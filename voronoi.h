@@ -45,6 +45,8 @@ struct event
 
 struct voronoi
 {
+	char done;
+
 	size_t     n_regions;
 	size_t     a_regions;
 	region_t** regions;

@@ -1,9 +1,13 @@
 #include "voronoi.h"
 
+#include <string.h>
+
 #include "utils.h"
 
 void voronoi_init(voronoi_t* v)
 {
+	v->done = 0;
+
 	heap_init(&v->events);
 
 	v->a_regions = 0;
@@ -101,8 +105,8 @@ static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
 		v->segments = CREALLOC(v->segments, segment_t, v->a_segments);
 	}
 	size_t id = v->n_segments++;
-	push_segment(a, id);
-	push_segment(b, id);
+	if (a != NULL) push_segment(a, id);
+	if (b != NULL) push_segment(b, id);
 	return id;
 }
 char voronoi_step(voronoi_t* v)
@@ -165,15 +169,15 @@ char voronoi_step(voronoi_t* v)
 	arc_t* l = v->front;
 	for (; l; l = l->next)
 	{
-		// intersection with i-th arc
+		// parabola_intersect with i-th arc
 		point_t p;
-		intersection(&p, &e->r->p, &l->r->p, v->sweepline);
+		parabola_intersect(&p, &e->r->p, &l->r->p, v->sweepline);
 
 		// check for previous and next breakpoints
 		point_t q;
-		if (l->prev != NULL && (!intersection(&q, &l->prev->r->p, &l->r->p, v->sweepline) || p.y < q.y))
+		if (l->prev != NULL && (!parabola_intersect(&q, &l->prev->r->p, &l->r->p, v->sweepline) || p.y < q.y))
 			continue;
-		if (l->next != NULL && (!intersection(&q, &l->r->p, &l->next->r->p, v->sweepline) || p.y > q.y))
+		if (l->next != NULL && (!parabola_intersect(&q, &l->r->p, &l->next->r->p, v->sweepline) || p.y > q.y))
 			continue;
 
 		break;
@@ -218,18 +222,82 @@ char voronoi_step(voronoi_t* v)
 	free(e);
 	return 1;
 }
+static char inRect(point_t* p)
+{
+	return
+	0 < p->x && p->x < 20 &&
+	0 < p->y && p->y < 20 &&
+	1;
+}
 void voronoi_end(voronoi_t* v)
 {
 	while (voronoi_step(v));
 
+	// finish segments
 	v->sweepline += 1000;
 	for (arc_t* l = v->front; l->next; l = l->next)
 	{
 		point_t p;
-		intersection(&p, &l->r->p, &l->next->r->p, v->sweepline);
-		if (l->end)
-			*voronoi_id2point(v, l->end) = p;
+		parabola_intersect(&p, &l->r->p, &l->next->r->p, v->sweepline);
+		*voronoi_id2point(v, l->end) = p;
 	}
+
+	static char x = 1;
+	if (x)
+	{
+		x = 0;
+		return;
+	}
+	// restrict regions to rectangle
+	for (size_t i = 0; i < v->n_regions; i++)
+	{
+		region_t* r = v->regions[i];
+
+		segment_t border[4] =
+		{
+			{{ 0, 0},{ 0,20}},
+			{{ 0,20},{20,20}},
+			{{20,20},{20, 0}},
+			{{20, 0},{ 0, 0}},
+		};
+
+		// find two jutting edges
+		point_t* a = NULL;
+		point_t* b = NULL;
+		for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
+		{
+			segment_t* s = voronoi_id2segment(v, r->edges[j]);
+			char ak = inRect(&s->a);
+			char bk = inRect(&s->b);
+
+			if (!ak && !bk)
+			{
+				r->n_edges--;
+				memmove(r->edges+j, r->edges+j+1, sizeof(size_t)*(r->n_edges-j));
+				j--;
+			}
+			else if (ak != bk)
+			{
+				point_t* p = !ak ? &s->a : &s->b;
+				for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], s); k++);
+
+				if (a == NULL) a = p;
+				else           b = p;
+			}
+		}
+
+		if (a == NULL || b == NULL)
+			continue;
+
+		if (a->x == b->x || a->y == b->y)
+		{
+			size_t id = new_segment(v, r, NULL);
+			segment_t* s = voronoi_id2segment(v, id);
+			s->a = *a;
+			s->b = *b;
+		}
+	}
+	v->done = 1;
 }
 
 point_t* voronoi_id2point(voronoi_t* v, size_t id)

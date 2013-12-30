@@ -12,7 +12,7 @@ static void glInit()
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glPointSize(3);
-	glOrtho(0, 20, 20, 0, 0, 1);
+	glOrtho(-10, 30, 30, -10, 0, 1);
 	glDisable(GL_DEPTH_TEST);
 }
 
@@ -64,16 +64,19 @@ static void cb_display(void)
 		if (l->prev != NULL)
 		{
 			point_t p;
-			intersection(&p, &l->prev->r->p, &l->r->p, v.sweepline);
+			parabola_intersect(&p, &l->prev->r->p, &l->r->p, v.sweepline);
 			y1 = p.y;
 
-			point_t* q = voronoi_id2point(&v, l->end);
-			*q = p;
+			if (!v.done)
+			{
+				point_t* q = voronoi_id2point(&v, l->end);
+				*q = p;
+			}
 		}
 		if (l->next != NULL)
 		{
 			point_t p;
-			intersection(&p, &l->r->p, &l->next->r->p, v.sweepline);
+			parabola_intersect(&p, &l->r->p, &l->next->r->p, v.sweepline);
 			y2 = p.y;
 		}
 
@@ -84,11 +87,15 @@ static void cb_display(void)
 	// segments
 	glColor4ub(255, 255, 255, 255);
 	glBegin(GL_LINES);
-	for (size_t i = 0; i < v.n_segments; i++)
+	for (size_t i = 0; i < v.n_regions; i++)
 	{
-		segment_t* s = &v.segments[i];
-		glVertex2f(s->a.x, s->a.y);
-		glVertex2f(s->b.x, s->b.y);
+		region_t* r = v.regions[i];
+		for (size_t j = 0; j < r->n_edges; j++)
+		{
+			segment_t* s = voronoi_id2segment(&v, r->edges[j]);
+			glVertex2f(s->a.x, s->a.y);
+			glVertex2f(s->b.x, s->b.y);
+		}
 	}
 	glEnd();
 

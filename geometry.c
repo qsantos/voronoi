@@ -57,7 +57,7 @@ delta = b^2 - 4ac
 
 We have: y = (-b +- sqrt(delta)) / (2a)
 */
-char intersection(point_t* dst, point_t* f1, point_t* f2, float p)
+char parabola_intersect(point_t* dst, point_t* f1, point_t* f2, float p)
 {
 	point_t* f = f1;
 
