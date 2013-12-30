@@ -235,19 +235,15 @@ void voronoi_end(voronoi_t* v)
 
 	// finish segments
 	v->sweepline += 1000;
-	for (arc_t* l = v->front; l->next; l = l->next)
+	if (v->front == NULL)
+		return;
+	for (arc_t* l = v->front->next; l; l = l->next)
 	{
 		point_t p;
-		parabola_intersect(&p, &l->r->p, &l->next->r->p, v->sweepline);
+		parabola_intersect(&p, &l->prev->r->p, &l->r->p, v->sweepline);
 		*voronoi_id2point(v, l->end) = p;
 	}
 
-	static char x = 1;
-	if (x)
-	{
-		x = 0;
-		return;
-	}
 	// restrict regions to rectangle
 	for (size_t i = 0; i < v->n_regions; i++)
 	{
