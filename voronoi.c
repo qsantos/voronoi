@@ -249,7 +249,7 @@ void voronoi_end(voronoi_t* v)
 	{
 		region_t* r = v->regions[i];
 
-		segment_t border[4] =
+		static const segment_t border[4] =
 		{
 			{{ 0, 0},{ 0,20}},
 			{{ 0,20},{20,20}},

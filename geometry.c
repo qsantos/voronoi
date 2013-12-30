@@ -57,9 +57,9 @@ delta = b^2 - 4ac
 
 We have: y = (-b +- sqrt(delta)) / (2a)
 */
-char parabola_intersect(point_t* dst, point_t* f1, point_t* f2, float p)
+char parabola_intersect(point_t* dst, const point_t* f1, const point_t* f2, float p)
 {
-	point_t* f = f1;
+	const point_t* f = f1;
 
 	if (f1->x == f2->x)
 	{
@@ -127,7 +127,7 @@ not working
 */
 
 // from http://www.cs.hmc.edu/~mbrubeck/voronoi.html
-char circle_from3(point_t* c, float* r, point_t* p1, point_t* p2, point_t* p3)
+char circle_from3(point_t* c, float* r, const point_t* p1, const point_t* p2, const point_t* p3)
 {
 	// Check that bc is a "right turn" from ap2->
 	if ((p2->x-p1->x)*(p3->y-p1->y) - (p3->x-p1->x)*(p2->y-p1->y) > 0)
@@ -152,7 +152,7 @@ char circle_from3(point_t* c, float* r, point_t* p1, point_t* p2, point_t* p3)
 }
 
 // http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
-char segment_intersect(point_t* dst, segment_t* a, segment_t* b)
+char segment_intersect(point_t* dst, const segment_t* a, const segment_t* b)
 {
 	point_t p = a->a;
 	point_t r = point_minus(a->b,p);
