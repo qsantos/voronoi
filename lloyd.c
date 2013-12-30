@@ -1,9 +1,8 @@
+#include <stdio.h>
 #include "lloyd.h"
 
 #include <stdlib.h>
 #include <math.h>
-
-#define M_PI 3.14159265358979323846
 
 static float heading(point_t p)
 {
@@ -45,6 +44,7 @@ void lloyd_relaxation(voronoi_t* v)
 	{
 		region_t* r = v->regions[i];
 
+		// gather vertices (twice)
 		point_t v2[2*r->n_edges];
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
@@ -54,28 +54,32 @@ void lloyd_relaxation(voronoi_t* v)
 			v2[2*j+1] = s->b;
 		}
 
-		point_t centroid;
+		// compute mean point (inside polygon)
+		point_t mean = {0,0};
 		for (size_t j = 0; j < 2*r->n_edges; j++)
 		{
-			centroid.x += v2[j].x;
-			centroid.y += v2[j].y;
+			mean.x += v2[j].x;
+			mean.y += v2[j].y;
 		}
-		centroid.x /= 2*r->n_edges;
-		centroid.y /= 2*r->n_edges;
+		mean.x /= 2*r->n_edges;
+		mean.y /= 2*r->n_edges;
 
-		qsort_r(v2, 2*r->n_edges, sizeof(point_t), poly_vert, &centroid);
+		// order vertices
+		qsort_r(v2, 2*r->n_edges, sizeof(point_t), poly_vert, &mean);
 
+		// filter out doubles
 		point_t v[r->n_edges];
 		for (size_t j = 0; j < r->n_edges; j++)
 			v[j] = v2[2*j];
 
+		// compute centroid
 		float x = 0;
 		float y = 0;
 		float A = 0;
 		for (size_t i=0, j=r->n_edges-1; i < r->n_edges; j=i++)
 		{
-			point_t p = v[i];
-			point_t q = v[j];
+			point_t p = v[j];
+			point_t q = v[i];
 			float f = p.x*q.y - q.x*p.y;
 			x += (p.x+q.x)*f;
 			y += (p.y+q.y)*f;
@@ -84,9 +88,6 @@ void lloyd_relaxation(voronoi_t* v)
 		A /= 2;
 		x /= 6*A;
 		y /= 6*A;
-
-		if (fabs(A) > 100)
-			continue;
 
 		if (0 <= x && x <= 20 && 0 <= y && y <= 20)
 		{
