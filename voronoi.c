@@ -285,13 +285,36 @@ void voronoi_end(voronoi_t* v)
 		if (a == NULL || b == NULL)
 			continue;
 
+		point_t p;
 		if (a->x == b->x || a->y == b->y)
 		{
 			size_t id = new_segment(v, r, NULL);
 			segment_t* s = voronoi_id2segment(v, id);
 			s->a = *a;
 			s->b = *b;
+			continue;
 		}
+		else if ((a->x == 0 || a->x == 20) && (b->y == 0 || b->y == 20))
+		{
+			p.x = a->x;
+			p.y = b->y;
+		}
+		else if ((a->y == 0 || a->y == 20) && (b->x == 0 || b->x == 20))
+		{
+			p.x = b->x;
+			p.y = a->y;
+		}
+		else
+			continue;
+
+		size_t id1 = new_segment(v, r, NULL);
+		size_t id2 = new_segment(v, r, NULL);
+		segment_t* s1 = voronoi_id2segment(v, id1);
+		segment_t* s2 = voronoi_id2segment(v, id2);
+		s1->a = *a;
+		s1->b = p;
+		s2->a = p;
+		s2->b = *b;
 	}
 	v->done = 1;
 }
