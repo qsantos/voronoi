@@ -229,11 +229,8 @@ static char inRect(point_t* p)
 	0 < p->y && p->y < 20 &&
 	1;
 }
-void voronoi_end(voronoi_t* v)
+static void voronoi_finishSegments(voronoi_t* v)
 {
-	while (voronoi_step(v));
-
-	// finish segments
 	v->sweepline += 1000;
 	if (v->front == NULL)
 		return;
@@ -243,79 +240,89 @@ void voronoi_end(voronoi_t* v)
 		parabola_intersect(&p, &l->prev->r->p, &l->r->p, v->sweepline);
 		*voronoi_id2point(v, l->end) = p;
 	}
-
-	// restrict regions to rectangle
-	for (size_t i = 0; i < v->n_regions; i++)
+}
+static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
+{
+	static const segment_t border[4] =
 	{
-		region_t* r = v->regions[i];
+		{{ 0, 0},{ 0,20}},
+		{{ 0,20},{20,20}},
+		{{20,20},{20, 0}},
+		{{20, 0},{ 0, 0}},
+	};
 
-		static const segment_t border[4] =
+	// find two jutting edges
+	point_t* a = NULL;
+	point_t* b = NULL;
+	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
+	{
+		segment_t* s = voronoi_id2segment(v, r->edges[j]);
+		char ak = inRect(&s->a);
+		char bk = inRect(&s->b);
+
+		if (!ak && !bk)
 		{
-			{{ 0, 0},{ 0,20}},
-			{{ 0,20},{20,20}},
-			{{20,20},{20, 0}},
-			{{20, 0},{ 0, 0}},
-		};
-
-		// find two jutting edges
-		point_t* a = NULL;
-		point_t* b = NULL;
-		for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
-		{
-			segment_t* s = voronoi_id2segment(v, r->edges[j]);
-			char ak = inRect(&s->a);
-			char bk = inRect(&s->b);
-
-			if (!ak && !bk)
-			{
-				r->n_edges--;
-				memmove(r->edges+j, r->edges+j+1, sizeof(size_t)*(r->n_edges-j));
-				j--;
-			}
-			else if (ak != bk)
-			{
-				point_t* p = !ak ? &s->a : &s->b;
-				for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], s); k++);
-
-				if (a == NULL) a = p;
-				else           b = p;
-			}
+			r->n_edges--;
+			memmove(r->edges+j, r->edges+j+1, sizeof(size_t)*(r->n_edges-j));
+			j--;
 		}
-
-		if (a == NULL || b == NULL)
-			continue;
-
-		point_t p;
-		if (a->x == b->x || a->y == b->y)
+		else if (ak != bk)
 		{
-			size_t id = new_segment(v, r, NULL);
-			segment_t* s = voronoi_id2segment(v, id);
-			s->a = *a;
-			s->b = *b;
-			continue;
-		}
-		else if ((a->x == 0 || a->x == 20) && (b->y == 0 || b->y == 20))
-		{
-			p.x = a->x;
-			p.y = b->y;
-		}
-		else if ((a->y == 0 || a->y == 20) && (b->x == 0 || b->x == 20))
-		{
-			p.x = b->x;
-			p.y = a->y;
-		}
-		else
-			continue;
+			point_t* p = !ak ? &s->a : &s->b;
+			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], s); k++);
 
-		size_t id1 = new_segment(v, r, NULL);
-		size_t id2 = new_segment(v, r, NULL);
-		segment_t* s1 = voronoi_id2segment(v, id1);
-		segment_t* s2 = voronoi_id2segment(v, id2);
-		s1->a = *a;
-		s1->b = p;
-		s2->a = p;
-		s2->b = *b;
+			if (a == NULL) a = p;
+			else           b = p;
+		}
 	}
+
+	if (a == NULL || b == NULL)
+		return;
+
+	point_t p;
+	// handle sides
+	if (a->x == b->x || a->y == b->y)
+	{
+		size_t id = new_segment(v, r, NULL);
+		segment_t* s = voronoi_id2segment(v, id);
+		s->a = *a;
+		s->b = *b;
+		return;
+	}
+	// handle corners (two sides)
+	else if ((a->x == 0 || a->x == 20) && (b->y == 0 || b->y == 20))
+	{
+		p.x = a->x;
+		p.y = b->y;
+	}
+	else if ((a->y == 0 || a->y == 20) && (b->x == 0 || b->x == 20))
+	{
+		p.x = b->x;
+		p.y = a->y;
+	}
+	// should handle three or four sides
+	else
+		return;
+
+	// apply common corner correction
+	size_t id1 = new_segment(v, r, NULL);
+	size_t id2 = new_segment(v, r, NULL);
+	segment_t* s1 = voronoi_id2segment(v, id1);
+	segment_t* s2 = voronoi_id2segment(v, id2);
+	s1->a = *a;
+	s1->b = p;
+	s2->a = p;
+	s2->b = *b;
+}
+void voronoi_end(voronoi_t* v)
+{
+	while (voronoi_step(v));
+
+	voronoi_finishSegments(v);
+
+	for (size_t i = 0; i < v->n_regions; i++)
+		voronoi_restrictRegion(v, v->regions[i]);
+
 	v->done = 1;
 }
 
