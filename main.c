@@ -39,6 +39,28 @@ static void draw_parabola(point_t* f, double p, double y1, double y2)
 	glVertex2f(x, y2);
 }
 
+static void draw_beach(bnode_t* n, double sweep, double miny, double maxy)
+{
+	if (n == NULL)
+		return;
+
+	if (n->left != NULL)
+	{
+		point_t p;
+		parabola_intersect(&p, &n->r1->p, &n->r2->p, v.sweepline);
+
+		if (!v.done)
+		{
+			point_t* q = voronoi_id2point(&v, n->end);
+			*q = p;
+		}
+
+		draw_beach(n->left,  sweep, miny, p.y);
+		draw_beach(n->right, sweep, p.y, maxy);
+	}
+	else
+		draw_parabola(&n->r1->p, v.sweepline, miny, maxy);
+}
 static void cb_display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -53,35 +75,10 @@ static void cb_display(void)
 	}
 	glEnd();
 
-	// arcs
+	// beachline
 	glColor4ub(255, 0, 0, 255);
 	glBegin(GL_LINE_STRIP);
-	for (arc_t* l = v.front; l; l = l->next)
-	{
-		double y1 =  0;
-		double y2 = 20;
-
-		if (l->prev != NULL)
-		{
-			point_t p;
-			parabola_intersect(&p, &l->prev->r->p, &l->r->p, v.sweepline);
-			y1 = p.y;
-
-			if (!v.done)
-			{
-				point_t* q = voronoi_id2point(&v, l->end);
-				*q = p;
-			}
-		}
-		if (l->next != NULL)
-		{
-			point_t p;
-			parabola_intersect(&p, &l->r->p, &l->next->r->p, v.sweepline);
-			y2 = p.y;
-		}
-
-		draw_parabola(&l->r->p, v.sweepline, y1, y2);
-	}
+	draw_beach(v.front.root, v.sweepline, 0, 20);
 	glEnd();
 
 	// segments

@@ -14,7 +14,8 @@ void voronoi_init(voronoi_t* v)
 	v->n_regions = 0;
 	v->regions   = NULL;
 
-	v->front      = NULL;
+	binbeach_init(&v->front);
+
 	v->sweepline  = 0;
 	v->n_segments = 0;
 	v->a_segments = 0;
@@ -25,6 +26,8 @@ void voronoi_exit(voronoi_t* v)
 {
 	free(v->segments);
 
+	binbeach_exit(&v->front);
+/* TODO
 	arc_t* l = v->front;
 	while (l)
 	{
@@ -32,6 +35,7 @@ void voronoi_exit(voronoi_t* v)
 		free(l);
 		l = next;
 	}
+*/
 
 	event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
@@ -65,32 +69,36 @@ void voronoi_points(voronoi_t* v, size_t n, point_t* p)
 		voronoi_point(v, *p);
 }
 
-static void push_circle(voronoi_t* v, arc_t* l)
+static void push_circle(voronoi_t* v, bnode_t* n)
 {
-	if (l == NULL)
+	if (n == NULL)
 		return;
 
-	if (l->e != NULL && l->e->p.x != v->sweepline)
-		l->e->active = 0;
-	l->e = NULL;
+	if (n->event != NULL && n->event->p.x != v->sweepline)
+		n->event->active = 0;
+	n->event = NULL;
 
-	if (l->prev == NULL || l->next == NULL)
+	// find previous and next arcs
+	bnode_t* pa = bnode_prev(n);
+	bnode_t* na = bnode_next(n);
+
+	if (pa == NULL || na == NULL)
 		return;
 
 	event_t* e = CALLOC(event_t, 1);
 	e->active = 1;
-	e->r = l->r;
+	e->r = n->r1;
 	double r;
-	if (!circle_from3(&e->p, &r, &l->prev->r->p, &l->r->p, &l->next->r->p))
+	if (!circle_from3(&e->p, &r, &pa->r1->p, &n->r1->p, &na->r1->p))
 	{
 		free(e);
 		return;
 	}
 
 	e->is_circle = 1;
-	e->l = l;
+	e->n = n;
 	heap_insert(&v->events, e->p.x + r, e);
-	l->e = e;
+	n->event = e;
 }
 static void push_segment(region_t* a, size_t e)
 {
@@ -129,95 +137,48 @@ char voronoi_step(voronoi_t* v)
 
 	if (e->is_circle)
 	{
-		arc_t* l = e->l;
+		// current arc
+		bnode_t* n = e->n;
 
-		// finish segments
-		*voronoi_id2point(v, l->end) = e->p;
-		*voronoi_id2point(v, l->next->end) = e->p;
+		// finish segments at breakpoints
+		bnode_t* lb = bnode_right(n);
+		bnode_t* rb = bnode_left (n);
+		*voronoi_id2point(v, lb->end) = e->p;
+		*voronoi_id2point(v, rb->end) = e->p;
 
-		// merge points
-		l->prev->next = l->next;
-		l->next->prev = l->prev;
+		// save previous and next arcs
+		bnode_t* pa = bnode_prev(n);
+		bnode_t* na = bnode_next(n);
+
+		// remove arc
+		n = bnode_remove(n);
 
 		// refresh circle events
-		push_circle(v, l->prev);
-		push_circle(v, l->next);
+		push_circle(v, pa);
+		push_circle(v, na);
 
 		// start new segment
-		size_t s = new_segment(v, l->prev->r, l->next->r);
+		size_t s = new_segment(v, pa->r1, na->r1);
+		n->end = 2*s+1;
 		*voronoi_id2point(v, 2*s) = e->p;
-		l->next->end = 2*s+1;
 
-//		free(l);
 		free(e);
 		return 1;
 	}
 
-	if (v->front == NULL)
-	{
-		arc_t* a = CALLOC(arc_t, 1);
-		a->r = e->r;
-		a->next = NULL;
-		a->prev = NULL;
-		a->end = 0;
-		a->e = NULL;
-		v->front = a;
-		free(e);
+	bnode_t* n = binbeach_breakAt(&v->front, v->sweepline, e->r);
+
+	if (n->left == NULL)
 		return 1;
-	}
-
-	arc_t* l = v->front;
-	for (; l; l = l->next)
-	{
-		// parabola_intersect with i-th arc
-		point_t p;
-		parabola_intersect(&p, &e->r->p, &l->r->p, v->sweepline);
-
-		// check for previous and next breakpoints
-		point_t q;
-		if (l->prev != NULL && (!parabola_intersect(&q, &l->prev->r->p, &l->r->p, v->sweepline) || p.y < q.y))
-			continue;
-		if (l->next != NULL && (!parabola_intersect(&q, &l->r->p, &l->next->r->p, v->sweepline) || p.y > q.y))
-			continue;
-
-		break;
-	}
-
-	if (l == NULL)
-	{
-		// TODO
-		free(e);
-		return 1;
-	}
-
-	// insert arc
-	arc_t* a = CALLOC(arc_t, 1);
-	arc_t* b = CALLOC(arc_t, 1);
-
-	a->e = NULL;
-	b->e = NULL;
-
-	a->next = b;
-	a->prev = l;
-	a->r = e->r;
-
-	b->prev = a;
-	b->next = l->next;
-	b->r = l->r;
-
-	if (l->next)
-		l->next->prev = b;
-
-	l->next = a;
 
 	// insert events
-	push_circle(v, a->prev);
-	push_circle(v, a->next);
+	push_circle(v, n->left);
+	push_circle(v, n->right->right);
 
 	// add segment
-	size_t s = new_segment(v, l->r, e->r);
-	a->end = 2*s;
-	b->end = 2*s+1;
+	size_t s = new_segment(v, n->r1, e->r);
+	n->end        = 2*s;
+	n->right->end = 2*s+1;
 
 	free(e);
 	return 1;
@@ -229,17 +190,18 @@ static char inRect(point_t* p)
 	0 < p->y && p->y < 20 &&
 	1;
 }
-static void voronoi_finishSegments(voronoi_t* v)
+
+static void finishSegments(voronoi_t* v, bnode_t* n)
 {
-	v->sweepline += 1000;
-	if (v->front == NULL)
+	if (n->left == NULL)
 		return;
-	for (arc_t* l = v->front->next; l; l = l->next)
-	{
-		point_t p;
-		parabola_intersect(&p, &l->prev->r->p, &l->r->p, v->sweepline);
-		*voronoi_id2point(v, l->end) = p;
-	}
+
+	point_t p;
+	parabola_intersect(&p, &n->r1->p, &n->r2->p, v->sweepline);
+	*voronoi_id2point(v, n->end) = p;
+
+	finishSegments(v, n->left);
+	finishSegments(v, n->right);
 }
 static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
 {
@@ -318,7 +280,8 @@ void voronoi_end(voronoi_t* v)
 {
 	while (voronoi_step(v));
 
-	voronoi_finishSegments(v);
+	v->sweepline += 1000;
+	finishSegments(v, v->front.root);
 
 	for (size_t i = 0; i < v->n_regions; i++)
 		voronoi_restrictRegion(v, v->regions[i]);
@@ -326,12 +289,12 @@ void voronoi_end(voronoi_t* v)
 	v->done = 1;
 }
 
-point_t* voronoi_id2point(voronoi_t* v, size_t id)
+inline point_t* voronoi_id2point(voronoi_t* v, size_t id)
 {
 	segment_t* s = &v->segments[id/2];
 	return id % 2 == 0 ? &s->a : &s->b;
 }
-segment_t* voronoi_id2segment(voronoi_t* v, size_t id)
+inline segment_t* voronoi_id2segment(voronoi_t* v, size_t id)
 {
 	return &v->segments[id];
 }

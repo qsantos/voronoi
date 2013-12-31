@@ -2,12 +2,12 @@
 #define VORONOI_H
 
 typedef struct region  region_t;
-typedef struct arc     arc_t;
 typedef struct event   event_t;
 typedef struct voronoi voronoi_t;
 
 #include "heap.h"
 #include "geometry.h"
+#include "binbeach.h"
 
 struct region
 {
@@ -16,18 +16,6 @@ struct region
 
 	size_t  n_edges;
 	size_t* edges;
-};
-
-struct arc
-{
-	region_t* r;
-
-	size_t end;
-
-	arc_t* next;
-	arc_t* prev;
-
-	event_t* e;
 };
 
 struct event
@@ -39,8 +27,8 @@ struct event
 	region_t* r;
 
 	// circle info
-	point_t p;
-	arc_t* l;
+	point_t  p;
+	bnode_t* n;
 };
 
 struct voronoi
@@ -51,9 +39,9 @@ struct voronoi
 	size_t     a_regions;
 	region_t** regions;
 
-	heap_t events;
-	arc_t* front;
-	double  sweepline;
+	heap_t     events;
+	binbeach_t front;
+	double     sweepline;
 
 	size_t     n_segments;
 	size_t     a_segments;
