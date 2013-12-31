@@ -51,19 +51,24 @@ static void bubbleUp(heap_t* h, size_t i)
 }
 static void sinkDown(heap_t* h, size_t i)
 {
-	size_t l = left(i);
-	size_t r = right(i);
-
-	size_t next = i;
-	if (l < h->size && h->tree[l].idx < h->tree[next].idx)
-		next = l;
-	if (r < h->size && h->tree[r].idx < h->tree[next].idx)
-		next = r;
-
-	if (next != i)
+	while (1)
 	{
-		xchg(h, i, next);
-		sinkDown(h, next);
+		size_t l = left(i);
+		size_t r = right(i);
+
+		size_t next = i;
+		if (l < h->size && h->tree[l].idx < h->tree[next].idx)
+			next = l;
+		if (r < h->size && h->tree[r].idx < h->tree[next].idx)
+			next = r;
+
+		if (next != i)
+		{
+			xchg(h, i, next);
+			i = next;
+		}
+		else
+			break;
 	}
 }
 
