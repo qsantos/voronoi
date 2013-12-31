@@ -1,10 +1,10 @@
 #ifndef HEAP_H
 #define HEAP_H
 
-#include <sys/types.h>
-
 typedef struct hnode hnode_t;
 typedef struct heap  heap_t;
+
+#include <sys/types.h>
 
 struct hnode
 {

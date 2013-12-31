@@ -1,13 +1,13 @@
 #ifndef VORONOI_H
 #define VORONOI_H
 
-#include "heap.h"
-#include "geometry.h"
-
 typedef struct region  region_t;
 typedef struct arc     arc_t;
 typedef struct event   event_t;
 typedef struct voronoi voronoi_t;
+
+#include "heap.h"
+#include "geometry.h"
 
 struct region
 {
