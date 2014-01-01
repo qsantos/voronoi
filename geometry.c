@@ -158,14 +158,17 @@ char circle_from3(point_t* c, double* r, const point_t* p1, const point_t* p2, c
 	       F = C*(p1->x+p3->x) + D*(p1->y+p3->y),
 	       G = 2*(A*(p3->y-p2->y) - B*(p3->x-p2->x));
 
-	if (G == 0) return 0;  // Points are co-linear.
+	if (G == 0)  // Points are co-linear.
+		return 0;
 
 	// Point o is the center of the circle.
 	c->x = (D*E-B*F)/G;
 	c->y = (A*F-C*E)/G;
 
 	// o.x plus radius equals max x coordinate.
-	*r = sqrt( pow(p1->x-c->x, 2) + pow(p1->y-c->y, 2) );
+	double dx = p1->x - c->x;
+	double dy = p1->y - c->y;
+	*r = sqrt(dx*dx+dy*dy);
 	return 1;
 }
 
