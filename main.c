@@ -6,6 +6,7 @@
 #include "voronoi.h"
 #include "lloyd.h"
 
+int win_id;
 voronoi_t v;
 
 static void glInit()
@@ -111,7 +112,12 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	(void) x;
 	(void) y;
 
-	if (c == ' ')
+	if (c == 27)
+	{
+		glutDestroyWindow(win_id);
+		exit(0);
+	}
+	else if (c == ' ')
 	{
 		v.sweepline += 0.05;
 		if (v.sweepline >= v.events.tree[0].idx)
@@ -164,7 +170,7 @@ int main(int argc, char** argv)
 	{
 		glutInit(&argc, argv);
 		glutInitWindowSize(800, 600);
-		glutCreateWindow("Voronoi");
+		win_id = glutCreateWindow("Voronoi");
 		glutSetCursor(GLUT_CURSOR_NONE);
 		glutDisplayFunc (&cb_display);
 		glutKeyboardFunc(&cb_keyboard);
