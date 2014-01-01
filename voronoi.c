@@ -102,8 +102,8 @@ static void push_circle(voronoi_t* v, bnode_t* n)
 }
 static void push_segment(region_t* a, size_t e)
 {
-	a->edges = CREALLOC(a->edges, size_t, a->n_edges+1);
-	a->edges[a->n_edges++] = e;
+	a->edge_ids = CREALLOC(a->edge_ids, size_t, a->n_edges+1);
+	a->edge_ids[a->n_edges++] = e;
 }
 static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
 {
@@ -218,14 +218,14 @@ static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
 	point_t* b = NULL;
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
-		segment_t* s = voronoi_id2segment(v, r->edges[j]);
+		segment_t* s = voronoi_id2segment(v, r->edge_ids[j]);
 		char ak = inRect(&s->a);
 		char bk = inRect(&s->b);
 
 		if (!ak && !bk)
 		{
 			r->n_edges--;
-			memmove(r->edges+j, r->edges+j+1, sizeof(size_t)*(r->n_edges-j));
+			memmove(r->edge_ids+j, r->edge_ids+j+1, sizeof(size_t)*(r->n_edges-j));
 			j--;
 		}
 		else if (ak != bk)

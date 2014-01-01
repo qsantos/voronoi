@@ -47,7 +47,7 @@ void lloyd_relaxation(voronoi_t* v)
 		point_t v2[2*r->n_edges];
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
-			size_t id = r->edges[j];
+			size_t id = r->edge_ids[j];
 			segment_t* s = voronoi_id2segment(v, id);
 			v2[2*j]   = s->a;
 			v2[2*j+1] = s->b;

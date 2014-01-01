@@ -89,7 +89,7 @@ static void cb_display(void)
 		region_t* r = v.regions[i];
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
-			segment_t* s = voronoi_id2segment(&v, r->edges[j]);
+			segment_t* s = voronoi_id2segment(&v, r->edge_ids[j]);
 			glVertex2f(s->a.x, s->a.y);
 			glVertex2f(s->b.x, s->b.y);
 		}

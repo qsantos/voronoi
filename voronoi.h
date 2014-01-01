@@ -15,7 +15,7 @@ struct region
 	point_t p;
 
 	size_t  n_edges;
-	size_t* edges;
+	size_t* edge_ids;
 };
 
 struct event
