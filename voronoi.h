@@ -14,8 +14,9 @@ struct region
 	// site
 	point_t p;
 
-	size_t  n_edges;
-	size_t* edge_ids;
+	size_t      n_edges;
+	size_t*     edge_ids;
+	segment_t** edges;
 };
 
 struct event
@@ -56,6 +57,10 @@ void voronoi_points(voronoi_t* v, size_t n, point_t* p);
 
 char voronoi_step(voronoi_t* v);
 void voronoi_end (voronoi_t* v);
+
+// fill in quick access pointers in structures:
+//   * region_t.edges
+void voronoi_ptrs(voronoi_t* v);
 
 point_t*   voronoi_id2point  (voronoi_t* v, size_t id);
 segment_t* voronoi_id2segment(voronoi_t* v, size_t id);

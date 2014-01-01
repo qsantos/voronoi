@@ -50,7 +50,7 @@ void voronoi_point(voronoi_t* v, point_t p)
 		v->regions = CREALLOC(v->regions, region_t*, v->a_regions);
 	}
 	region_t* r = CALLOC(region_t, 1);
-	*r = (region_t){p, 0, NULL};
+	*r = (region_t){p, 0, NULL, NULL};
 	v->regions[v->n_regions++] = r;
 
 	event_t* e = CALLOC(event_t, 1);
@@ -284,6 +284,21 @@ void voronoi_end(voronoi_t* v)
 		voronoi_restrictRegion(v, v->regions[i]);
 
 	v->done = 1;
+}
+
+void voronoi_ptrs(voronoi_t* v)
+{
+	for (size_t i = 0; i < v->n_regions; i++)
+	{
+		region_t* r = v->regions[i];
+		r->edges = CALLOC(segment_t*, r->n_edges);
+		for (size_t j = 0; j < r->n_edges; j++)
+		{
+			size_t id = r->edge_ids[j];
+			segment_t* e = voronoi_id2segment(v, id);
+			r->edges[j] = e;
+		}
+	}
 }
 
 inline point_t* voronoi_id2point(voronoi_t* v, size_t id)
