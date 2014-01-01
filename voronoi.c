@@ -84,10 +84,7 @@ void voronoi_points(voronoi_t* v, size_t n, point_t* p)
 
 static void push_circle(voronoi_t* v, bnode_t* n)
 {
-	if (n == NULL)
-		return;
-
-	if (n->event != NULL && n->event->p.x != v->sweepline)
+	if (n->event != NULL)
 		n->event->active = 0;
 	n->event = NULL;
 
