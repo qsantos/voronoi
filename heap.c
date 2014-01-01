@@ -92,8 +92,11 @@ void* heap_remove(heap_t* h)
 		return NULL;
 
 	void* ret = h->tree[0].data;
-	xchg(h, 0, --h->size);
-	sinkDown(h, 0);
+	if (--h->size != 0)
+	{
+		xchg(h, 0, h->size);
+		sinkDown(h, 0);
+	}
 
 	if (h->size < h->avail/4)
 	{
