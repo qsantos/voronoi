@@ -52,10 +52,9 @@ static inline size_t right(size_t i)
 }
 static inline void xchg(heap_t* h, size_t i, size_t j)
 {
-	hnode_t tmp;
-	memcpy(&tmp,        &h->tree[i], sizeof(hnode_t));
-	memcpy(&h->tree[i], &h->tree[j], sizeof(hnode_t));
-	memcpy(&h->tree[j], &tmp,        sizeof(hnode_t));
+	hnode_t tmp = h->tree[i];
+	h->tree[i] = h->tree[j];
+	h->tree[j] = tmp;
 }
 static void bubbleUp(heap_t* h, size_t i)
 {
