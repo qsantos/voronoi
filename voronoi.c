@@ -27,15 +27,6 @@ void voronoi_exit(voronoi_t* v)
 	free(v->segments);
 
 	binbeach_exit(&v->front);
-/* TODO
-	arc_t* l = v->front;
-	while (l)
-	{
-		arc_t* next = l->next;
-		free(l);
-		l = next;
-	}
-*/
 
 	event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
@@ -43,7 +34,11 @@ void voronoi_exit(voronoi_t* v)
 	heap_exit(&v->events);
 
 	for (size_t i = 0; i < v->n_regions; i++)
-		free(v->regions[i]);
+	{
+		region_t* r = v->regions[i];
+		free(r->edge_ids);
+		free(r);
+	}
 	free(v->regions);
 }
 
@@ -161,24 +156,26 @@ char voronoi_step(voronoi_t* v)
 		size_t s = new_segment(v, pa->r1, na->r1);
 		n->end = 2*s+1;
 		*voronoi_id2point(v, 2*s) = e->p;
-
-		free(e);
-		return 1;
 	}
+	else
+	{
+		bnode_t* n = binbeach_breakAt(&v->front, v->sweepline, e->r);
 
-	bnode_t* n = binbeach_breakAt(&v->front, v->sweepline, e->r);
+		if (n->left == NULL)
+		{
+			free(e);
+			return 1;
+		}
 
-	if (n->left == NULL)
-		return 1;
+		// insert events
+		push_circle(v, n->left);
+		push_circle(v, n->right->right);
 
-	// insert events
-	push_circle(v, n->left);
-	push_circle(v, n->right->right);
-
-	// add segment
-	size_t s = new_segment(v, n->r1, e->r);
-	n->end        = 2*s;
-	n->right->end = 2*s+1;
+		// add segment
+		size_t s = new_segment(v, n->r1, e->r);
+		n->end        = 2*s;
+		n->right->end = 2*s+1;
+	}
 
 	free(e);
 	return 1;
