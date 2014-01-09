@@ -34,8 +34,9 @@ struct segment
 	point_t b;
 };
 
-point_t point_minus(point_t a, point_t b);
-double   point_cross(point_t a, point_t b);
+point_t point_minus   (point_t a, point_t b);
+double  point_cross   (point_t a, point_t b);
+point_t point_centroid(int n, point_t* pts);
 
 // compute the parabola_intersect of two parabola of
 // focuses f1 and f2 and common directrix x=p

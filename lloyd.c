@@ -51,6 +51,36 @@ static int poly_vert(const void* a, const void* b, void* arg)
 	double db = heading((point_t){pb->x-c->x, pb->y-c->y});
 	return da < db ? -1 : da > db ? +1 : 0;
 }
+void region_points(point_t* dst, region_t* r, voronoi_t* v)
+{
+	// gather vertices (twice)
+	point_t tmp[2*r->n_edges];
+	for (size_t j = 0; j < r->n_edges; j++)
+	{
+		size_t id = r->edge_ids[j];
+		segment_t* s = voronoi_id2segment(v, id);
+		tmp[2*j]   = s->a;
+		tmp[2*j+1] = s->b;
+	}
+
+	// compute mean point (inside polygon)
+	point_t mean = {0,0};
+	for (size_t j = 0; j < 2*r->n_edges; j++)
+	{
+		mean.x += tmp[j].x;
+		mean.y += tmp[j].y;
+	}
+	mean.x /= 2*r->n_edges;
+	mean.y /= 2*r->n_edges;
+
+	// order vertices
+	qsort_r(tmp, 2*r->n_edges, sizeof(point_t), poly_vert, &mean);
+
+	// filter out multiple points
+	for (size_t j = 0; j < r->n_edges; j++)
+		dst[j] = tmp[2*j];
+}
+
 void lloyd_relaxation(voronoi_t* v)
 {
 	voronoi_end(v);
@@ -61,55 +91,17 @@ void lloyd_relaxation(voronoi_t* v)
 	{
 		region_t* r = v->regions[i];
 
-		// gather vertices (twice)
-		point_t v2[2*r->n_edges];
-		for (size_t j = 0; j < r->n_edges; j++)
-		{
-			size_t id = r->edge_ids[j];
-			segment_t* s = voronoi_id2segment(v, id);
-			v2[2*j]   = s->a;
-			v2[2*j+1] = s->b;
-		}
-
-		// compute mean point (inside polygon)
-		point_t mean = {0,0};
-		for (size_t j = 0; j < 2*r->n_edges; j++)
-		{
-			mean.x += v2[j].x;
-			mean.y += v2[j].y;
-		}
-		mean.x /= 2*r->n_edges;
-		mean.y /= 2*r->n_edges;
-
-		// order vertices
-		qsort_r(v2, 2*r->n_edges, sizeof(point_t), poly_vert, &mean);
-
-		// filter out multiple points
-		point_t v[r->n_edges];
-		for (size_t j = 0; j < r->n_edges; j++)
-			v[j] = v2[2*j];
+		// gather vertices
+		point_t vertices[r->n_edges];
+		region_points(vertices, r, v);
 
 		// compute centroid
-		double x = 0;
-		double y = 0;
-		double A = 0;
-		for (size_t i=0, j=r->n_edges-1; i < r->n_edges; j=i++)
-		{
-			point_t p = v[j];
-			point_t q = v[i];
-			double f = p.x*q.y - q.x*p.y;
-			x += (p.x+q.x)*f;
-			y += (p.y+q.y)*f;
-			A += f;
-		}
-		A /= 2;
-		x /= 6*A;
-		y /= 6*A;
+		point_t c = point_centroid(r->n_edges, vertices);
 
-		if (0 <= x && x <= 20 && 0 <= y && y <= 20)
+		if (0 <= c.x && c.x <= 20 && 0 <= c.y && c.y <= 20)
 		{
-			npoints[k].x = x;
-			npoints[k].y = y;
+			npoints[k].x = c.x;
+			npoints[k].y = c.y;
 			k++;
 		}
 	}

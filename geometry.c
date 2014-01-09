@@ -30,6 +30,25 @@ double point_cross(point_t a, point_t b)
 	return a.x*b.y - a.y*b.x;
 }
 
+point_t point_centroid(int n, point_t* pts)
+{
+	point_t ret = {0,0};
+	double A = 0;
+	for (int i=0, j=n-1; i < n; j=i++)
+	{
+		point_t p = pts[j];
+		point_t q = pts[i];
+		double f = p.x*q.y - q.x*p.y;
+		ret.x += (p.x+q.x)*f;
+		ret.y += (p.y+q.y)*f;
+		A += f;
+	}
+	A /= 2;
+	ret.x /= 6*A;
+	ret.y /= 6*A;
+	return ret;
+}
+
 /*
 Parabolas are defined as being the set of points equidistant from a
 vertex (focus) and a line (directrix). It is exactly what we need for
