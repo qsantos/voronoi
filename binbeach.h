@@ -19,50 +19,52 @@
 #ifndef BINBEACH_H
 #define BINBEACH_H
 
-typedef struct bnode    bnode_t;
-typedef struct binbeach binbeach_t;
+typedef struct vr_bnode    vr_bnode_t;
+typedef struct vr_binbeach vr_binbeach_t;
 
 #include <sys/types.h>
 
 #include "geometry.h"
 
-struct region;
-struct event;
+struct vr_region;
+struct vr_event;
 
 // internal nodes are breakpoints
 // (two regions, two children, 'end' set)
 // leaves are arcs (one region, no child, 'event' set)
-struct bnode
+struct vr_bnode
 {
-	struct region* r1;
-	struct region* r2;
+	struct vr_region* r1;
+	struct vr_region* r2;
 
-	bnode_t* left;
-	bnode_t* right;
-	bnode_t* parent;
+	vr_bnode_t* left;
+	vr_bnode_t* right;
+	vr_bnode_t* parent;
 
-	size_t        end;
-	struct event* event;
+	// linked point id
+	size_t end;
+
+	struct vr_event* event;
 };
 
-struct binbeach
+struct vr_binbeach
 {
-	bnode_t* root;
+	vr_bnode_t* root;
 };
 
-void binbeach_init(binbeach_t* b);
-void binbeach_exit(binbeach_t* b);
+void vr_binbeach_init(vr_binbeach_t* b);
+void vr_binbeach_exit(vr_binbeach_t* b);
 
-bnode_t* binbeach_breakAt(binbeach_t* b, double sweep, struct region* r);
+vr_bnode_t* vr_binbeach_breakAt(vr_binbeach_t* b, double sweep, struct vr_region* r);
 
-// bnode_X finds closest ancestor of n for which n is X to
-bnode_t* bnode_left (bnode_t* n);
-bnode_t* bnode_right(bnode_t* n);
+// vr_bnode_X finds closest ancestor of n for which n is X to
+vr_bnode_t* vr_bnode_left (vr_bnode_t* n);
+vr_bnode_t* vr_bnode_right(vr_bnode_t* n);
 
-bnode_t* bnode_prev(bnode_t* n);
-bnode_t* bnode_next(bnode_t* n);
+vr_bnode_t* vr_bnode_prev(vr_bnode_t* n);
+vr_bnode_t* vr_bnode_next(vr_bnode_t* n);
 
 // remove an arc, return the new breakpoint
-bnode_t* bnode_remove(bnode_t* n);
+vr_bnode_t* vr_bnode_remove(vr_bnode_t* n);
 
 #endif

@@ -25,7 +25,7 @@
 #include "lloyd.h"
 
 int win_id;
-voronoi_t v;
+vr_diagram_t v;
 
 static void glInit()
 {
@@ -58,7 +58,7 @@ static void draw_parabola(point_t* f, double p, double y1, double y2)
 	glVertex2f(x, y2);
 }
 
-static void draw_beach(bnode_t* n, double sweep, double miny, double maxy)
+static void draw_beach(vr_bnode_t* n, double sweep, double miny, double maxy)
 {
 	if (n == NULL)
 		return;
@@ -70,7 +70,7 @@ static void draw_beach(bnode_t* n, double sweep, double miny, double maxy)
 
 		if (!v.done)
 		{
-			point_t* q = voronoi_id2point(&v, n->end);
+			point_t* q = vr_diagram_id2point(&v, n->end);
 			*q = p;
 		}
 
@@ -105,10 +105,10 @@ static void cb_display(void)
 	glBegin(GL_LINES);
 	for (size_t i = 0; i < v.n_regions; i++)
 	{
-		region_t* r = v.regions[i];
+		vr_region_t* r = v.regions[i];
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
-			segment_t* s = voronoi_id2segment(&v, r->edge_ids[j]);
+			segment_t* s = vr_diagram_id2segment(&v, r->edge_ids[j]);
 			glVertex2f(s->a.x, s->a.y);
 			glVertex2f(s->b.x, s->b.y);
 		}
@@ -139,23 +139,23 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	{
 		v.sweepline += 0.05;
 		if (v.sweepline >= v.events.tree[0].idx)
-			voronoi_step(&v);
+			vr_diagram_step(&v);
 	}
 	else if (c == 'l')
-		lloyd_relaxation(&v);
+		vr_lloyd_relaxation(&v);
 	else if (c == '\r')
-		voronoi_end(&v);
+		vr_diagram_end(&v);
 	else if (c == 'a')
 		for (size_t i = 0; i < 1000; i++)
-			voronoi_step(&v);
+			vr_diagram_step(&v);
 	else if (c == 'z')
 		for (size_t i = 0; i < 100; i++)
-			voronoi_step(&v);
+			vr_diagram_step(&v);
 	else if (c == 'e')
 		for (size_t i = 0; i < 10; i++)
-			voronoi_step(&v);
+			vr_diagram_step(&v);
 	else
-		voronoi_step(&v);
+		vr_diagram_step(&v);
 
 	glutPostRedisplay();
 }
@@ -174,14 +174,14 @@ int main(int argc, char** argv)
 		curarg++;
 	}
 
-	voronoi_init(&v);
+	vr_diagram_init(&v);
 
 	srand(42);
 	for (size_t i = 0; i < n_points; i++)
 	{
 		double x = ( (double) rand() / INT_MAX ) * 20;
 		double y = ( (double) rand() / INT_MAX ) * 20;
-		voronoi_point(&v, (point_t){x,y});
+		vr_diagram_point(&v, (point_t){x,y});
 	}
 
 	if (glEnabled)
@@ -197,9 +197,9 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		voronoi_end(&v);
+		vr_diagram_end(&v);
 	}
 
-	voronoi_exit(&v);
+	vr_diagram_exit(&v);
 	return 0;
 }

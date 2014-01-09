@@ -51,14 +51,14 @@ static int poly_vert(const void* a, const void* b, void* arg)
 	double db = heading((point_t){pb->x-c->x, pb->y-c->y});
 	return da < db ? -1 : da > db ? +1 : 0;
 }
-void region_points(point_t* dst, region_t* r, voronoi_t* v)
+void vr_region_points(point_t* dst, vr_region_t* r, vr_diagram_t* v)
 {
 	// gather vertices (twice)
 	point_t tmp[2*r->n_edges];
 	for (size_t j = 0; j < r->n_edges; j++)
 	{
 		size_t id = r->edge_ids[j];
-		segment_t* s = voronoi_id2segment(v, id);
+		segment_t* s = vr_diagram_id2segment(v, id);
 		tmp[2*j]   = s->a;
 		tmp[2*j+1] = s->b;
 	}
@@ -81,19 +81,19 @@ void region_points(point_t* dst, region_t* r, voronoi_t* v)
 		dst[j] = tmp[2*j];
 }
 
-void lloyd_relaxation(voronoi_t* v)
+void vr_lloyd_relaxation(vr_diagram_t* v)
 {
-	voronoi_end(v);
+	vr_diagram_end(v);
 
 	point_t npoints[v->n_regions];
 	size_t k = 0;
 	for (size_t i = 0; i < v->n_regions; i++)
 	{
-		region_t* r = v->regions[i];
+		vr_region_t* r = v->regions[i];
 
 		// gather vertices
 		point_t vertices[r->n_edges];
-		region_points(vertices, r, v);
+		vr_region_points(vertices, r, v);
 
 		// compute centroid
 		point_t c = point_centroid(r->n_edges, vertices);
@@ -105,7 +105,7 @@ void lloyd_relaxation(voronoi_t* v)
 			k++;
 		}
 	}
-	voronoi_exit(v);
-	voronoi_init(v);
-	voronoi_points(v, k, npoints);
+	vr_diagram_exit(v);
+	vr_diagram_init(v);
+	vr_diagram_points(v, k, npoints);
 }

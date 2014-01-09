@@ -22,7 +22,7 @@
 
 #include "utils.h"
 
-void voronoi_init(voronoi_t* v)
+void vr_diagram_init(vr_diagram_t* v)
 {
 	v->done = 0;
 
@@ -32,7 +32,7 @@ void voronoi_init(voronoi_t* v)
 	v->n_regions = 0;
 	v->regions   = NULL;
 
-	binbeach_init(&v->front);
+	vr_binbeach_init(&v->front);
 
 	v->sweepline  = 0;
 	v->n_segments = 0;
@@ -40,62 +40,62 @@ void voronoi_init(voronoi_t* v)
 	v->segments   = NULL;
 }
 
-void voronoi_exit(voronoi_t* v)
+void vr_diagram_exit(vr_diagram_t* v)
 {
 	free(v->segments);
 
-	binbeach_exit(&v->front);
+	vr_binbeach_exit(&v->front);
 
-	event_t* e;
+	vr_event_t* e;
 	while ((e = heap_remove(&v->events)) != NULL)
 		free(e);
 	heap_exit(&v->events);
 
 	for (size_t i = 0; i < v->n_regions; i++)
 	{
-		region_t* r = v->regions[i];
+		vr_region_t* r = v->regions[i];
 		free(r->edge_ids);
 		free(r);
 	}
 	free(v->regions);
 }
 
-void voronoi_point(voronoi_t* v, point_t p)
+void vr_diagram_point(vr_diagram_t* v, point_t p)
 {
 	if (v->n_regions == v->a_regions)
 	{
 		v->a_regions = v->a_regions == 0 ? 1 : 2*v->a_regions;
-		v->regions = CREALLOC(v->regions, region_t*, v->a_regions);
+		v->regions = CREALLOC(v->regions, vr_region_t*, v->a_regions);
 	}
-	region_t* r = CALLOC(region_t, 1);
-	*r = (region_t){p, 0, NULL, NULL};
+	vr_region_t* r = CALLOC(vr_region_t, 1);
+	*r = (vr_region_t){p, 0, NULL, NULL};
 	v->regions[v->n_regions++] = r;
 
-	event_t* e = CALLOC(event_t, 1);
-	*e = (event_t){0, 1, r, r->p, NULL};
+	vr_event_t* e = CALLOC(vr_event_t, 1);
+	*e = (vr_event_t){0, 1, r, r->p, NULL};
 	heap_insert(&v->events, p.x, e);
 }
 
-void voronoi_points(voronoi_t* v, size_t n, point_t* p)
+void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p)
 {
 	for (; n; p++, n--)
-		voronoi_point(v, *p);
+		vr_diagram_point(v, *p);
 }
 
-static void push_circle(voronoi_t* v, bnode_t* n)
+static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 {
 	if (n->event != NULL)
 		n->event->active = 0;
 	n->event = NULL;
 
 	// find previous and next arcs
-	bnode_t* pa = bnode_prev(n);
-	bnode_t* na = bnode_next(n);
+	vr_bnode_t* pa = vr_bnode_prev(n);
+	vr_bnode_t* na = vr_bnode_next(n);
 
 	if (pa == NULL || na == NULL)
 		return;
 
-	event_t* e = CALLOC(event_t, 1);
+	vr_event_t* e = CALLOC(vr_event_t, 1);
 	e->active = 1;
 	e->r = n->r1;
 	double r;
@@ -110,12 +110,12 @@ static void push_circle(voronoi_t* v, bnode_t* n)
 	heap_insert(&v->events, e->p.x + r, e);
 	n->event = e;
 }
-static void push_segment(region_t* a, size_t e)
+static void push_segment(vr_region_t* a, size_t e)
 {
 	a->edge_ids = CREALLOC(a->edge_ids, size_t, a->n_edges+1);
 	a->edge_ids[a->n_edges++] = e;
 }
-static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
+static size_t new_segment(vr_diagram_t* v, vr_region_t* a, vr_region_t* b)
 {
 	if (v->n_segments == v->a_segments)
 	{
@@ -127,13 +127,13 @@ static size_t new_segment(voronoi_t* v, region_t* a, region_t* b)
 	if (b != NULL) push_segment(b, id);
 	return id;
 }
-char voronoi_step(voronoi_t* v)
+char vr_diagram_step(vr_diagram_t* v)
 {
 	double idx = 0;
 	if (v->events.size != 0)
 		idx = v->events.tree[0].idx;
 
-	event_t* e = heap_remove(&v->events);
+	vr_event_t* e = heap_remove(&v->events);
 	if (e == NULL)
 		return 0;
 
@@ -148,20 +148,20 @@ char voronoi_step(voronoi_t* v)
 	if (e->is_circle)
 	{
 		// current arc
-		bnode_t* n = e->n;
+		vr_bnode_t* n = e->n;
 
 		// finish segments at breakpoints
-		bnode_t* lb = bnode_right(n);
-		bnode_t* rb = bnode_left (n);
-		*voronoi_id2point(v, lb->end) = e->p;
-		*voronoi_id2point(v, rb->end) = e->p;
+		vr_bnode_t* lb = vr_bnode_right(n);
+		vr_bnode_t* rb = vr_bnode_left (n);
+		*vr_diagram_id2point(v, lb->end) = e->p;
+		*vr_diagram_id2point(v, rb->end) = e->p;
 
 		// save previous and next arcs
-		bnode_t* pa = bnode_prev(n);
-		bnode_t* na = bnode_next(n);
+		vr_bnode_t* pa = vr_bnode_prev(n);
+		vr_bnode_t* na = vr_bnode_next(n);
 
 		// remove arc
-		n = bnode_remove(n);
+		n = vr_bnode_remove(n);
 
 		// refresh circle events
 		push_circle(v, pa);
@@ -170,11 +170,11 @@ char voronoi_step(voronoi_t* v)
 		// start new segment
 		size_t s = new_segment(v, pa->r1, na->r1);
 		n->end = 2*s+1;
-		*voronoi_id2point(v, 2*s) = e->p;
+		*vr_diagram_id2point(v, 2*s) = e->p;
 	}
 	else
 	{
-		bnode_t* n = binbeach_breakAt(&v->front, v->sweepline, e->r);
+		vr_bnode_t* n = vr_binbeach_breakAt(&v->front, v->sweepline, e->r);
 
 		if (n->left == NULL)
 		{
@@ -203,19 +203,19 @@ static char inRect(point_t* p)
 	1;
 }
 
-static void finishSegments(voronoi_t* v, bnode_t* n)
+static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
 {
 	if (n->left == NULL)
 		return;
 
 	point_t p;
 	parabola_intersect(&p, &n->r1->p, &n->r2->p, v->sweepline);
-	*voronoi_id2point(v, n->end) = p;
+	*vr_diagram_id2point(v, n->end) = p;
 
 	finishSegments(v, n->left);
 	finishSegments(v, n->right);
 }
-static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
+static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 {
 	static const segment_t border[4] =
 	{
@@ -230,7 +230,7 @@ static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
 	point_t* b = NULL;
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
-		segment_t* s = voronoi_id2segment(v, r->edge_ids[j]);
+		segment_t* s = vr_diagram_id2segment(v, r->edge_ids[j]);
 		char ak = inRect(&s->a);
 		char bk = inRect(&s->b);
 
@@ -258,7 +258,7 @@ static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
 	if (a->x == b->x || a->y == b->y)
 	{
 		size_t id = new_segment(v, r, NULL);
-		segment_t* s = voronoi_id2segment(v, id);
+		segment_t* s = vr_diagram_id2segment(v, id);
 		s->a = *a;
 		s->b = *b;
 		return;
@@ -281,47 +281,47 @@ static void voronoi_restrictRegion(voronoi_t* v, region_t* r)
 	// apply common corner correction
 	size_t id1 = new_segment(v, r, NULL);
 	size_t id2 = new_segment(v, r, NULL);
-	segment_t* s1 = voronoi_id2segment(v, id1);
-	segment_t* s2 = voronoi_id2segment(v, id2);
+	segment_t* s1 = vr_diagram_id2segment(v, id1);
+	segment_t* s2 = vr_diagram_id2segment(v, id2);
 	s1->a = *a;
 	s1->b = p;
 	s2->a = p;
 	s2->b = *b;
 }
-void voronoi_end(voronoi_t* v)
+void vr_diagram_end(vr_diagram_t* v)
 {
-	while (voronoi_step(v));
+	while (vr_diagram_step(v));
 
 	v->sweepline += 1000;
 	finishSegments(v, v->front.root);
 
 	for (size_t i = 0; i < v->n_regions; i++)
-		voronoi_restrictRegion(v, v->regions[i]);
+		vr_diagram_restrictRegion(v, v->regions[i]);
 
 	v->done = 1;
 }
 
-void voronoi_ptrs(voronoi_t* v)
+void vr_diagram_ptrs(vr_diagram_t* v)
 {
 	for (size_t i = 0; i < v->n_regions; i++)
 	{
-		region_t* r = v->regions[i];
+		vr_region_t* r = v->regions[i];
 		r->edges = CALLOC(segment_t*, r->n_edges);
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
 			size_t id = r->edge_ids[j];
-			segment_t* e = voronoi_id2segment(v, id);
+			segment_t* e = vr_diagram_id2segment(v, id);
 			r->edges[j] = e;
 		}
 	}
 }
 
-inline point_t* voronoi_id2point(voronoi_t* v, size_t id)
+inline point_t* vr_diagram_id2point(vr_diagram_t* v, size_t id)
 {
 	segment_t* s = &v->segments[id/2];
 	return id % 2 == 0 ? &s->a : &s->b;
 }
-inline segment_t* voronoi_id2segment(voronoi_t* v, size_t id)
+inline segment_t* vr_diagram_id2segment(vr_diagram_t* v, size_t id)
 {
 	return &v->segments[id];
 }

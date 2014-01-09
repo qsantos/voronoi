@@ -21,12 +21,12 @@
 #include "utils.h"
 #include "voronoi.h"
 
-void binbeach_init(binbeach_t* b)
+void vr_binbeach_init(vr_binbeach_t* b)
 {
 	b->root = NULL;
 }
 
-static void exit_aux(bnode_t* n)
+static void exit_aux(vr_bnode_t* n)
 {
 	if (n == NULL)
 		return;
@@ -35,24 +35,24 @@ static void exit_aux(bnode_t* n)
 	exit_aux(n->right);
 	free(n);
 }
-void binbeach_exit(binbeach_t* b)
+void vr_binbeach_exit(vr_binbeach_t* b)
 {
 	exit_aux(b->root);
 }
 
-bnode_t* binbeach_breakAt(binbeach_t* b, double sweep, struct region* r)
+vr_bnode_t* vr_binbeach_breakAt(vr_binbeach_t* b, double sweep, struct vr_region* r)
 {
 	if (b->root == NULL)
 	{
-		bnode_t* n = CALLOC(bnode_t, 1);
-		*n = (bnode_t){r, NULL, NULL, NULL, NULL, 0, NULL};
+		vr_bnode_t* n = CALLOC(vr_bnode_t, 1);
+		*n = (vr_bnode_t){r, NULL, NULL, NULL, NULL, 0, NULL};
 		b->root = n;
 		return n;
 	}
 
 	// find the intersecting arc
 	double y = r->p.y;
-	bnode_t* n = b->root;
+	vr_bnode_t* n = b->root;
 	while (n->r2 != NULL)
 	{
 		point_t p;
@@ -64,23 +64,23 @@ bnode_t* binbeach_breakAt(binbeach_t* b, double sweep, struct region* r)
 	}
 
 	// left leaf (original region)
-	bnode_t* ll = CALLOC(bnode_t, 1);
-	*ll = (bnode_t){n->r1, NULL, NULL, NULL, n, 0, n->event};
+	vr_bnode_t* ll = CALLOC(vr_bnode_t, 1);
+	*ll = (vr_bnode_t){n->r1, NULL, NULL, NULL, n, 0, n->event};
 	n->left = ll;
 
 	// new internal node
-	bnode_t* ni = CALLOC(bnode_t, 1);
+	vr_bnode_t* ni = CALLOC(vr_bnode_t, 1);
 
 	// middle leaf (new region)
-	bnode_t* ml = CALLOC(bnode_t, 1);
-	*ml = (bnode_t){r, NULL, NULL, NULL, ni, 0, NULL};
+	vr_bnode_t* ml = CALLOC(vr_bnode_t, 1);
+	*ml = (vr_bnode_t){r, NULL, NULL, NULL, ni, 0, NULL};
 
 	// right leaf (original region)
-	bnode_t* rl = CALLOC(bnode_t, 1);
-	*rl = (bnode_t){n->r1, NULL, NULL, NULL, ni, 0, n->event};
+	vr_bnode_t* rl = CALLOC(vr_bnode_t, 1);
+	*rl = (vr_bnode_t){n->r1, NULL, NULL, NULL, ni, 0, n->event};
 
 	// filling new internal node
-	*ni = (bnode_t){r, n->r1, ml, rl, n, 0, NULL};
+	*ni = (vr_bnode_t){r, n->r1, ml, rl, n, 0, NULL};
 
 	// filling old leaf node (now internal)
 	n->r2    = r;
@@ -90,23 +90,23 @@ bnode_t* binbeach_breakAt(binbeach_t* b, double sweep, struct region* r)
 	return n;
 }
 
-bnode_t* bnode_left(bnode_t* n)
+vr_bnode_t* vr_bnode_left(vr_bnode_t* n)
 {
 	while (n->parent != NULL && n != n->parent->left)
 		n = n->parent;
 	return n->parent;
 }
 
-bnode_t* bnode_right(bnode_t* n)
+vr_bnode_t* vr_bnode_right(vr_bnode_t* n)
 {
 	while (n->parent != NULL && n != n->parent->right)
 		n = n->parent;
 	return n->parent;
 }
 
-bnode_t* bnode_prev(bnode_t* n)
+vr_bnode_t* vr_bnode_prev(vr_bnode_t* n)
 {
-	n = bnode_right(n);
+	n = vr_bnode_right(n);
 	if (n == NULL)
 		return NULL;
 	n = n->left;
@@ -115,9 +115,9 @@ bnode_t* bnode_prev(bnode_t* n)
 	return n;
 }
 
-bnode_t* bnode_next(bnode_t* n)
+vr_bnode_t* vr_bnode_next(vr_bnode_t* n)
 {
-	n = bnode_left(n);
+	n = vr_bnode_left(n);
 	if (n == NULL)
 		return NULL;
 	n = n->right;
@@ -126,30 +126,30 @@ bnode_t* bnode_next(bnode_t* n)
 	return n;
 }
 
-bnode_t* bnode_remove(bnode_t* n)
+vr_bnode_t* vr_bnode_remove(vr_bnode_t* n)
 {
-	bnode_t* p = n->parent;
+	vr_bnode_t* p = n->parent;
 
-	bnode_t* s; // sibling
-	bnode_t* a; // new breakpoint
+	vr_bnode_t* s; // sibling
+	vr_bnode_t* a; // new breakpoint
 
 	// find sibling and breakpoint
 	if (n == p->left)
 	{
 		s = p->right;
-		a = bnode_right(n);
+		a = vr_bnode_right(n);
 		a->r2 = p->r2;
 	}
 	else
 	{
 		s = p->left;
-		a = bnode_left(n);
+		a = vr_bnode_left(n);
 		a->r1 = p->r1;
 	}
 
 	// find where to put sibling
-	bnode_t* pp = p->parent;
-	bnode_t** x = p == pp->left ? &pp->left  : &pp->right;
+	vr_bnode_t* pp = p->parent;
+	vr_bnode_t** x = p == pp->left ? &pp->left  : &pp->right;
 
 	*x = s;
 	s->parent = pp;

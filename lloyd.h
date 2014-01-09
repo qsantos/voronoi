@@ -22,10 +22,10 @@
 #include "voronoi.h"
 
 // returns the ordered points around a region
-void region_points(point_t* dst, region_t* r, voronoi_t* v);
+void vr_region_points(point_t* dst, vr_region_t* r, vr_diagram_t* v);
 
-// compute new 'voronoi_t' point set given
+// compute new 'vr_diagram_t' point set given
 // initial set using Lloyd relaxation
-void lloyd_relaxation(voronoi_t* v);
+void vr_lloyd_relaxation(vr_diagram_t* v);
 
 #endif

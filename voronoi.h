@@ -19,15 +19,15 @@
 #ifndef VORONOI_H
 #define VORONOI_H
 
-typedef struct region  region_t;
-typedef struct event   event_t;
-typedef struct voronoi voronoi_t;
+typedef struct vr_region  vr_region_t;
+typedef struct vr_event   vr_event_t;
+typedef struct vr_diagram vr_diagram_t;
 
 #include "heap.h"
 #include "geometry.h"
 #include "binbeach.h"
 
-struct region
+struct vr_region
 {
 	// site
 	point_t p;
@@ -37,50 +37,50 @@ struct region
 	segment_t** edges;
 };
 
-struct event
+struct vr_event
 {
 	// 0 if new vertex, 1 if circle
 	char is_circle;
 	char active;
 
-	region_t* r;
+	vr_region_t* r;
 
 	// circle info
 	point_t  p;
-	bnode_t* n;
+	vr_bnode_t* n;
 };
 
-struct voronoi
+struct vr_diagram
 {
 	char done;
 
-	size_t     n_regions;
-	size_t     a_regions;
-	region_t** regions;
+	size_t        n_regions;
+	size_t        a_regions;
+	vr_region_t** regions;
 
-	heap_t     events;
-	binbeach_t front;
-	double     sweepline;
+	heap_t        events;
+	vr_binbeach_t front;
+	double        sweepline;
 
 	size_t     n_segments;
 	size_t     a_segments;
 	segment_t* segments;
 };
 
-void voronoi_init(voronoi_t* v);
-void voronoi_exit(voronoi_t* v);
+void vr_diagram_init(vr_diagram_t* v);
+void vr_diagram_exit(vr_diagram_t* v);
 
-void voronoi_point (voronoi_t* v, point_t p);
-void voronoi_points(voronoi_t* v, size_t n, point_t* p);
+void vr_diagram_point (vr_diagram_t* v, point_t p);
+void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p);
 
-char voronoi_step(voronoi_t* v);
-void voronoi_end (voronoi_t* v);
+char vr_diagram_step(vr_diagram_t* v);
+void vr_diagram_end (vr_diagram_t* v);
 
 // fill in quick access pointers in structures:
-//   * region_t.edges
-void voronoi_ptrs(voronoi_t* v);
+//   * vr_region_t.edges
+void vr_diagram_ptrs(vr_diagram_t* v);
 
-point_t*   voronoi_id2point  (voronoi_t* v, size_t id);
-segment_t* voronoi_id2segment(voronoi_t* v, size_t id);
+point_t*   vr_diagram_id2point  (vr_diagram_t* v, size_t id);
+segment_t* vr_diagram_id2segment(vr_diagram_t* v, size_t id);
 
 #endif
