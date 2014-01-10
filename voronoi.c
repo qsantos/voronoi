@@ -264,19 +264,38 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 		char ak = inRect(s->s.a);
 		char bk = inRect(s->s.b);
 
-		if (!ak && !bk)
+		if (!ak && !bk) // outside edge
 		{
 			r->n_edges--;
 			memmove(r->edges+j, r->edges+j+1, sizeof(segment_t*)*(r->n_edges-j));
 			j--;
 		}
-		else if (ak != bk)
+		else if (ak != bk) // jutting edge
 		{
 			point_t* p = !ak ? s->s.a : s->s.b;
-			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], &s->s); k++);
+			if (a == NULL) // first jutting edge
+			{
+				// TODO
+				// BEGIN quickfix
+				// this edge might share its end with the other
+				// jutting edge; we need to split this end
+				vr_point_t* np = CALLOC(vr_point_t, 1);
+				new_point(v, np);
+				np->p = *p;
+				p = &np->p;
+				if (!ak) s->s.a = p;
+				else s->s.b = p;
+				// END quickfix
 
-			if (a == NULL) a = p;
-			else           b = p;
+				a = p;
+			}
+			else // second jutting edge
+			{
+				b = p;
+			}
+
+			// crop the edge
+			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], &s->s); k++);
 		}
 	}
 
