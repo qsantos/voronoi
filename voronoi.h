@@ -19,7 +19,7 @@
 #ifndef VORONOI_H
 #define VORONOI_H
 
-typedef struct vr_point   vr_point_t;
+typedef struct vr_vertex   vr_vertex_t;
 typedef struct vr_edge vr_edge_t;
 typedef struct vr_region  vr_region_t;
 typedef struct vr_event   vr_event_t;
@@ -29,7 +29,7 @@ typedef struct vr_diagram vr_diagram_t;
 #include "geometry.h"
 #include "binbeach.h"
 
-struct vr_point
+struct vr_vertex
 {
 	point_t p;
 
@@ -65,15 +65,15 @@ struct vr_event
 	vr_region_t* r;
 
 	// circle info
-	vr_point_t* p;
+	vr_vertex_t* p;
 	vr_bnode_t* n;
 };
 
 struct vr_diagram
 {
-	size_t       n_points;
-	size_t       a_points;
-	vr_point_t** points;
+	size_t        n_vertices;
+	size_t        a_vertices;
+	vr_vertex_t** vertices;
 
 	size_t      n_edges;
 	size_t      a_edges;
