@@ -102,7 +102,7 @@ static void cb_display(void)
 		vr_region_t* r = v.regions[i];
 		for (size_t j = 0; j < r->n_edges; j++)
 		{
-			segment_t* s = r->edges[j];
+			segment_t* s = &r->edges[j]->s;
 			if (s->a == NULL || s->b == NULL)
 				continue;
 			glVertex2f(s->a->x, s->a->y);

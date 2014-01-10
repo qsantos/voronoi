@@ -89,15 +89,14 @@ void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p)
 		vr_diagram_point(v, *p);
 }
 
-static point_t* new_point(vr_diagram_t* v, point_t* np)
+static void new_point(vr_diagram_t* v, vr_point_t* np)
 {
 	if (v->n_points == v->a_points)
 	{
 		v->a_points = v->a_points == 0 ? 1 : 2*v->a_points;
-		v->points = CREALLOC(v->points, point_t*, v->a_points);
+		v->points = CREALLOC(v->points, vr_point_t*, v->a_points);
 	}
 	v->points[v->n_points++] = np;
-	return np;
 }
 static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 {
@@ -115,9 +114,9 @@ static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 	vr_event_t* e = CALLOC(vr_event_t, 1);
 	e->active = 1;
 	e->r = n->r1;
-	e->p = CALLOC(point_t, 1);
+	e->p = CALLOC(vr_point_t, 1);
 	double r;
-	if (!circle_from3(e->p, &r, &pa->r1->p, &n->r1->p, &na->r1->p))
+	if (!circle_from3(&e->p->p, &r, &pa->r1->p, &n->r1->p, &na->r1->p))
 	{
 		free(e->p);
 		free(e);
@@ -127,25 +126,25 @@ static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 	new_point(v, e->p);
 	e->is_circle = 1;
 	e->n = n;
-	heap_insert(&v->events, e->p->x + r, e);
+	heap_insert(&v->events, e->p->p.x + r, e);
 	n->event = e;
 }
 
-static void push_edge(vr_region_t* a, segment_t* s)
+static void push_edge(vr_region_t* a, vr_segment_t* s)
 {
-	a->edges = CREALLOC(a->edges, segment_t*, a->n_edges+1);
+	a->edges = CREALLOC(a->edges, vr_segment_t*, a->n_edges+1);
 	a->edges[a->n_edges++] = s;
 }
-static segment_t* new_segment(vr_diagram_t* v, vr_region_t* a, vr_region_t* b)
+static vr_segment_t* new_segment(vr_diagram_t* v, vr_region_t* a, vr_region_t* b)
 {
 	if (v->n_segments == v->a_segments)
 	{
 		v->a_segments = v->a_segments == 0 ? 1 : 2*v->a_segments;
-		v->segments = CREALLOC(v->segments, segment_t*, v->a_segments);
+		v->segments = CREALLOC(v->segments, vr_segment_t*, v->a_segments);
 	}
 
-	segment_t* s = CALLOC(segment_t, 1);
-	*s = (segment_t){NULL, NULL};
+	vr_segment_t* s = CALLOC(vr_segment_t, 1);
+	*s = (vr_segment_t){{NULL, NULL}, a, b};
 	if (a != NULL) push_edge(a, s);
 	if (b != NULL) push_edge(b, s);
 	return s;
@@ -191,9 +190,9 @@ char vr_diagram_step(vr_diagram_t* v)
 		push_circle(v, na);
 
 		// start new segment
-		segment_t* s = new_segment(v, pa->r1, na->r1);
-		s->a = e->p;
-		n->end = &s->b;
+		vr_segment_t* s = new_segment(v, pa->r1, na->r1);
+		s->s.a = &e->p->p;
+		n->end = (vr_point_t**) &s->s.b;
 	}
 	else
 	{
@@ -210,9 +209,9 @@ char vr_diagram_step(vr_diagram_t* v)
 		push_circle(v, n->right->right);
 
 		// add segment
-		segment_t* s = new_segment(v, n->r1, e->r);
-		n->end = &s->a;
-		n->right->end = &s->b;
+		vr_segment_t* s = new_segment(v, n->r1, e->r);
+		n       ->end = (vr_point_t**) &s->s.a;
+		n->right->end = (vr_point_t**) &s->s.b;
 	}
 
 	free(e);
@@ -224,9 +223,9 @@ static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
 	if (n->left == NULL)
 		return;
 
-	point_t* p = CALLOC(point_t, 1);
+	vr_point_t* p = CALLOC(vr_point_t, 1);
 	new_point(v, p);
-	parabola_intersect(p, &n->r1->p, &n->r2->p, v->sweepline);
+	parabola_intersect(&p->p, &n->r1->p, &n->r2->p, v->sweepline);
 	*n->end = p;
 
 	finishSegments(v, n->left);
@@ -261,9 +260,9 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	point_t* b = NULL;
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
-		segment_t* s = r->edges[j];
-		char ak = inRect(s->a);
-		char bk = inRect(s->b);
+		vr_segment_t* s = r->edges[j];
+		char ak = inRect(s->s.a);
+		char bk = inRect(s->s.b);
 
 		if (!ak && !bk)
 		{
@@ -273,8 +272,8 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 		}
 		else if (ak != bk)
 		{
-			point_t* p = !ak ? s->a : s->b;
-			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], s); k++);
+			point_t* p = !ak ? s->s.a : s->s.b;
+			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], &s->s); k++);
 
 			if (a == NULL) a = p;
 			else           b = p;
@@ -288,9 +287,9 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	// handle sides
 	if (a->x == b->x || a->y == b->y)
 	{
-		segment_t* s = new_segment(v, r, NULL);
-		s->a = a;
-		s->b = b;
+		vr_segment_t* s = new_segment(v, r, NULL);
+		s->s.a = a;
+		s->s.b = b;
 		return;
 	}
 	// handle corners (two sides)
@@ -309,14 +308,14 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 		return;
 
 	// apply common corner correction
-	point_t* np = CALLOC(point_t, 1);
-	*np = p;
-	segment_t* s1 = new_segment(v, r, NULL);
-	segment_t* s2 = new_segment(v, r, NULL);
-	s1->a = a;
-	s1->b = np;
-	s2->a = np;
-	s2->b = b;
+	vr_point_t* np = CALLOC(vr_point_t, 1);
+	np->p = p;
+	vr_segment_t* s1 = new_segment(v, r, NULL);
+	vr_segment_t* s2 = new_segment(v, r, NULL);
+	s1->s.a = a;
+	s1->s.b = &np->p;
+	s2->s.a = &np->p;
+	s2->s.b = b;
 }
 void vr_diagram_end(vr_diagram_t* v)
 {

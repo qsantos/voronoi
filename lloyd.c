@@ -57,7 +57,7 @@ void vr_region_points(point_t* dst, vr_region_t* r)
 	point_t tmp[2*r->n_edges];
 	for (size_t j = 0; j < r->n_edges; j++)
 	{
-		segment_t* s = r->edges[j];
+		segment_t* s = &r->edges[j]->s;
 		tmp[2*j]   = *s->a;
 		tmp[2*j+1] = *s->b;
 	}
