@@ -353,3 +353,18 @@ void vr_diagram_end(vr_diagram_t* v)
 	for (size_t i = 0; i < v->n_regions; i++)
 		vr_diagram_restrictRegion(v, v->regions[i]);
 }
+
+static void vertex_addEdge(vr_vertex_t* p, vr_edge_t* e)
+{
+	p->edges = CALLOC(vr_edge_t*, p->n_edges+1);
+	p->edges[p->n_edges++] = e;
+}
+void vr_diagram_fill(vr_diagram_t* v)
+{
+	for (size_t i = 0; i < v->n_edges; i++)
+	{
+		vr_edge_t* e = v->edges[i];
+		vertex_addEdge((vr_vertex_t*) e->s.a, e);
+		vertex_addEdge((vr_vertex_t*) e->s.b, e);
+	}
+}

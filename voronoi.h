@@ -100,4 +100,8 @@ void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p);
 char vr_diagram_step(vr_diagram_t* v);
 void vr_diagram_end (vr_diagram_t* v);
 
+// after vr_diagram_end() has been called, use this to
+// fill in content that is not set automatically
+void vr_diagram_fill(vr_diagram_t* v);
+
 #endif
