@@ -68,14 +68,6 @@ static void draw_beach(vr_bnode_t* n, double sweep, double miny, double maxy)
 		point_t p;
 		parabola_intersect(&p, &n->r1->p, &n->r2->p, v.sweepline);
 
-/* TODO
-		if (!v.done)
-		{
-			point_t* q = vr_diagram_id2point(&v, n->end);
-			*q = p;
-		}
-*/
-
 		draw_beach(n->left,  sweep, miny, p.y);
 		draw_beach(n->right, sweep, p.y, maxy);
 	}

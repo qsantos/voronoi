@@ -51,8 +51,6 @@ struct vr_event
 
 struct vr_diagram
 {
-	char done;
-
 	size_t    n_points;
 	size_t    a_points;
 	point_t** points;

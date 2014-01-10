@@ -24,8 +24,6 @@
 
 void vr_diagram_init(vr_diagram_t* v)
 {
-	v->done = 0;
-
 	v->n_segments = 0;
 	v->a_segments = 0;
 	v->segments   = NULL;
@@ -329,8 +327,4 @@ void vr_diagram_end(vr_diagram_t* v)
 
 	for (size_t i = 0; i < v->n_regions; i++)
 		vr_diagram_restrictRegion(v, v->regions[i]);
-
-/* TODO
-	v->done = 1;
-*/
 }
