@@ -32,6 +32,9 @@ typedef struct vr_diagram vr_diagram_t;
 struct vr_point
 {
 	point_t p;
+
+	size_t         n_edges;
+	vr_segment_t** edges;
 };
 
 struct vr_segment

@@ -63,7 +63,11 @@ void vr_diagram_exit(vr_diagram_t* v)
 	free(v->segments);
 
 	for (size_t i = 0; i < v->n_points; i++)
-		free(v->points[i]);
+	{
+		vr_point_t* p = v->points[i];
+		free(p->edges);
+		free(p);
+	}
 	free(v->points);
 }
 
@@ -89,14 +93,17 @@ void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p)
 		vr_diagram_point(v, *p);
 }
 
-static void new_point(vr_diagram_t* v, vr_point_t* np)
+static vr_point_t* new_point(vr_diagram_t* v)
 {
 	if (v->n_points == v->a_points)
 	{
 		v->a_points = v->a_points == 0 ? 1 : 2*v->a_points;
 		v->points = CREALLOC(v->points, vr_point_t*, v->a_points);
 	}
+	vr_point_t* np = CALLOC(vr_point_t, 1);
+	*np = (vr_point_t) {{0,0}, 0, NULL};
 	v->points[v->n_points++] = np;
+	return np;
 }
 static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 {
@@ -111,19 +118,18 @@ static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 	if (pa == NULL || na == NULL)
 		return;
 
+	point_t p;
+	double r;
+	if (!circle_from3(&p, &r, &pa->r1->p, &n->r1->p, &na->r1->p))
+		return;
+
 	vr_event_t* e = CALLOC(vr_event_t, 1);
 	e->active = 1;
 	e->r = n->r1;
-	e->p = CALLOC(vr_point_t, 1);
-	double r;
-	if (!circle_from3(&e->p->p, &r, &pa->r1->p, &n->r1->p, &na->r1->p))
-	{
-		free(e->p);
-		free(e);
-		return;
-	}
 
-	new_point(v, e->p);
+	e->p = new_point(v);
+	e->p->p = p;
+
 	e->is_circle = 1;
 	e->n = n;
 	heap_insert(&v->events, e->p->p.x + r, e);
@@ -223,8 +229,7 @@ static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
 	if (n->left == NULL)
 		return;
 
-	vr_point_t* p = CALLOC(vr_point_t, 1);
-	new_point(v, p);
+	vr_point_t* p = new_point(v);
 	parabola_intersect(&p->p, &n->r1->p, &n->r2->p, v->sweepline);
 	*n->end = p;
 
@@ -279,8 +284,7 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 				// BEGIN quickfix
 				// this edge might share its end with the other
 				// jutting edge; we need to split this end
-				vr_point_t* np = CALLOC(vr_point_t, 1);
-				new_point(v, np);
+				vr_point_t* np = new_point(v);
 				np->p = *p;
 				p = &np->p;
 				if (!ak) s->s.a = p;
