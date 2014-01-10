@@ -286,14 +286,11 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	if (a == NULL || b == NULL)
 		return;
 
-	(void) v;
-	/*
 	point_t p;
 	// handle sides
 	if (a->x == b->x || a->y == b->y)
 	{
-		size_t id = new_segment(v, r, NULL);
-		segment_t* s = vr_diagram_id2segment(v, id);
+		segment_t* s = new_segment(v, r, NULL);
 		s->a = a;
 		s->b = b;
 		return;
@@ -314,15 +311,14 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 		return;
 
 	// apply common corner correction
-	size_t id1 = new_segment(v, r, NULL);
-	size_t id2 = new_segment(v, r, NULL);
-	segment_t* s1 = vr_diagram_id2segment(v, id1);
-	segment_t* s2 = vr_diagram_id2segment(v, id2);
+	point_t* np = CALLOC(point_t, 1);
+	*np = p;
+	segment_t* s1 = new_segment(v, r, NULL);
+	segment_t* s2 = new_segment(v, r, NULL);
 	s1->a = a;
-	s1->b = &p;
-	s2->a = &p;
+	s1->b = np;
+	s2->a = np;
 	s2->b = b;
-	*/
 }
 void vr_diagram_end(vr_diagram_t* v)
 {
