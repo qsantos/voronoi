@@ -71,6 +71,9 @@ struct vr_event
 
 struct vr_diagram
 {
+	double width;
+	double height;
+
 	size_t        n_vertices;
 	size_t        a_vertices;
 	vr_vertex_t** vertices;
@@ -88,7 +91,7 @@ struct vr_diagram
 	double        sweepline;
 };
 
-void vr_diagram_init(vr_diagram_t* v);
+void vr_diagram_init(vr_diagram_t* v, double w, double h);
 void vr_diagram_exit(vr_diagram_t* v);
 
 void vr_diagram_point (vr_diagram_t* v, point_t p);

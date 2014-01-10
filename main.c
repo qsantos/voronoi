@@ -27,11 +27,14 @@
 int win_id;
 vr_diagram_t v;
 
+#define VR_WIDTH  800
+#define VR_HEIGHT 600
+
 static void glInit()
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glPointSize(3);
-	glOrtho(-10, 30, 30, -10, 0, 1);
+	glOrtho(-10, VR_WIDTH+10, VR_HEIGHT+10, -10, 0, 1);
 	glDisable(GL_DEPTH_TEST);
 }
 
@@ -44,7 +47,7 @@ static void draw_parabola(point_t* f, double p, double y1, double y2)
 	}
 
 	y1 = fmax(y1, 0);
-	y2 = fmin(y2, 20);
+	y2 = fmin(y2, VR_HEIGHT);
 
 	for (double y = y1; y < y2; y+=0.1)
 	{
@@ -91,7 +94,7 @@ static void cb_display(void)
 	// beachline
 	glColor4ub(255, 0, 0, 255);
 	glBegin(GL_LINE_STRIP);
-	draw_beach(v.front.root, v.sweepline, 0, 20);
+	draw_beach(v.front.root, v.sweepline, 0, VR_HEIGHT);
 	glEnd();
 
 	// segments
@@ -115,7 +118,7 @@ static void cb_display(void)
 	glColor4ub(0, 255, 0, 255);
 	glBegin(GL_LINES);
 	glVertex2f(v.sweepline, 0);
-	glVertex2f(v.sweepline, 20);
+	glVertex2f(v.sweepline, VR_HEIGHT);
 	glEnd();
 
 	glutSwapBuffers();
@@ -171,20 +174,20 @@ int main(int argc, char** argv)
 		curarg++;
 	}
 
-	vr_diagram_init(&v);
+	vr_diagram_init(&v, VR_WIDTH, VR_HEIGHT);
 
 	srand(42);
 	for (size_t i = 0; i < n_points; i++)
 	{
-		double x = ( (double) rand() / INT_MAX ) * 20;
-		double y = ( (double) rand() / INT_MAX ) * 20;
+		double x = ( (double) rand() / INT_MAX ) * VR_WIDTH;
+		double y = ( (double) rand() / INT_MAX ) * VR_HEIGHT;
 		vr_diagram_point(&v, (point_t){x,y});
 	}
 
 	if (glEnabled)
 	{
 		glutInit(&argc, argv);
-		glutInitWindowSize(800, 600);
+		glutInitWindowSize(VR_WIDTH+20, VR_HEIGHT+20);
 		win_id = glutCreateWindow("Voronoi");
 		glutSetCursor(GLUT_CURSOR_NONE);
 		glutDisplayFunc (&cb_display);

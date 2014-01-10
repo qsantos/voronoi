@@ -97,14 +97,16 @@ void vr_lloyd_relaxation(vr_diagram_t* v)
 		// compute centroid
 		point_t c = point_centroid(r->n_edges, vertices);
 
-		if (0 <= c.x && c.x <= 20 && 0 <= c.y && c.y <= 20)
+		if (0 <= c.x && c.x <= v->width && 0 <= c.y && c.y <= v->height)
 		{
 			npoints[k].x = c.x;
 			npoints[k].y = c.y;
 			k++;
 		}
 	}
+	double w = v->width;
+	double h = v->height;
 	vr_diagram_exit(v);
-	vr_diagram_init(v);
+	vr_diagram_init(v, w, h);
 	vr_diagram_points(v, k, npoints);
 }

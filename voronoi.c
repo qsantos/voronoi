@@ -22,8 +22,11 @@
 
 #include "utils.h"
 
-void vr_diagram_init(vr_diagram_t* v)
+void vr_diagram_init(vr_diagram_t* v, double w, double h)
 {
+	v->width  = w;
+	v->height = h;
+
 	v->n_edges = 0;
 	v->a_edges = 0;
 	v->edges   = NULL;
@@ -236,21 +239,21 @@ static void finishEdges(vr_diagram_t* v, vr_bnode_t* n)
 	finishEdges(v, n->left);
 	finishEdges(v, n->right);
 }
-static char inRect(point_t* p)
+static char inRect(vr_diagram_t* v, point_t* p)
 {
 	return
-	0 < p->x && p->x < 20 &&
-	0 < p->y && p->y < 20 &&
+	0 < p->x && p->x < v->width  &&
+	0 < p->y && p->y < v->height &&
 	1;
 }
 static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 {
 	point_t corners[4] =
 	{
-		{ 0, 0},
-		{ 0,20},
-		{20,20},
-		{20, 0},
+		{       0,        0},
+		{       0,v->height},
+		{v->width,v->height},
+		{v->width,        0},
 	};
 	segment_t border[4] =
 	{
@@ -266,8 +269,8 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
 		vr_edge_t* e = r->edges[j];
-		char ak = inRect(e->s.a);
-		char bk = inRect(e->s.b);
+		char ak = inRect(v, e->s.a);
+		char bk = inRect(v, e->s.b);
 
 		if (!ak && !bk) // outside edge
 		{
@@ -316,12 +319,12 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 		return;
 	}
 	// handle corners (two sides)
-	else if ((a->x == 0 || a->x == 20) && (b->y == 0 || b->y == 20))
+	else if ((a->x == 0 || a->x == v->width) && (b->y == 0 || b->y == v->height))
 	{
 		p.x = a->x;
 		p.y = b->y;
 	}
-	else if ((a->y == 0 || a->y == 20) && (b->x == 0 || b->x == 20))
+	else if ((a->y == 0 || a->y == v->height) && (b->x == 0 || b->x == v->width))
 	{
 		p.x = b->x;
 		p.y = a->y;
