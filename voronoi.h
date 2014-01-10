@@ -53,14 +53,6 @@ struct vr_diagram
 {
 	char done;
 
-	size_t        n_regions;
-	size_t        a_regions;
-	vr_region_t** regions;
-
-	heap_t        events;
-	vr_binbeach_t front;
-	double        sweepline;
-
 	size_t    n_points;
 	size_t    a_points;
 	point_t** points;
@@ -68,6 +60,14 @@ struct vr_diagram
 	size_t      n_segments;
 	size_t      a_segments;
 	segment_t** segments;
+
+	size_t        n_regions;
+	size_t        a_regions;
+	vr_region_t** regions;
+
+	heap_t        events;
+	vr_binbeach_t front;
+	double        sweepline;
 };
 
 void vr_diagram_init(vr_diagram_t* v);

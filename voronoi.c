@@ -26,14 +26,6 @@ void vr_diagram_init(vr_diagram_t* v)
 {
 	v->done = 0;
 
-	heap_init(&v->events);
-
-	v->a_regions = 0;
-	v->n_regions = 0;
-	v->regions   = NULL;
-
-	vr_binbeach_init(&v->front);
-	v->sweepline  = 0;
 	v->n_segments = 0;
 	v->a_segments = 0;
 	v->segments   = NULL;
@@ -41,18 +33,18 @@ void vr_diagram_init(vr_diagram_t* v)
 	v->n_points = 0;
 	v->a_points = 0;
 	v->points   = NULL;
+
+	v->n_regions = 0;
+	v->a_regions = 0;
+	v->regions   = NULL;
+
+	heap_init(&v->events);
+	vr_binbeach_init(&v->front);
+	v->sweepline  = 0;
 }
 
 void vr_diagram_exit(vr_diagram_t* v)
 {
-	for (size_t i = 0; i < v->n_segments; i++)
-		free(v->segments[i]);
-	free(v->segments);
-
-	for (size_t i = 0; i < v->n_points; i++)
-		free(v->points[i]);
-	free(v->points);
-
 	vr_binbeach_exit(&v->front);
 
 	vr_event_t* e;
@@ -67,6 +59,14 @@ void vr_diagram_exit(vr_diagram_t* v)
 		free(r);
 	}
 	free(v->regions);
+
+	for (size_t i = 0; i < v->n_segments; i++)
+		free(v->segments[i]);
+	free(v->segments);
+
+	for (size_t i = 0; i < v->n_points; i++)
+		free(v->points[i]);
+	free(v->points);
 }
 
 void vr_diagram_point(vr_diagram_t* v, point_t p)
