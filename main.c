@@ -129,6 +129,7 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	if (c == 27)
 	{
 		glutDestroyWindow(win_id);
+		vr_diagram_exit(&v);
 		exit(0);
 	}
 	else if (c == ' ')
@@ -194,8 +195,7 @@ int main(int argc, char** argv)
 	else
 	{
 		vr_diagram_end(&v);
+		vr_diagram_exit(&v);
+		return 0;
 	}
-
-	vr_diagram_exit(&v);
-	return 0;
 }
