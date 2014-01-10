@@ -20,7 +20,7 @@
 #define VORONOI_H
 
 typedef struct vr_point   vr_point_t;
-typedef struct vr_segment vr_segment_t;
+typedef struct vr_edge vr_edge_t;
 typedef struct vr_region  vr_region_t;
 typedef struct vr_event   vr_event_t;
 typedef struct vr_diagram vr_diagram_t;
@@ -33,11 +33,13 @@ struct vr_point
 {
 	point_t p;
 
+	// these fields are initialized
+	// but not filled automatically
 	size_t         n_edges;
-	vr_segment_t** edges;
+	vr_edge_t** edges;
 };
 
-struct vr_segment
+struct vr_edge
 {
 	segment_t s;
 
@@ -50,8 +52,8 @@ struct vr_region
 	// site
 	point_t p;
 
-	size_t         n_edges;
-	vr_segment_t** edges;
+	size_t      n_edges;
+	vr_edge_t** edges;
 };
 
 struct vr_event
@@ -73,9 +75,9 @@ struct vr_diagram
 	size_t       a_points;
 	vr_point_t** points;
 
-	size_t         n_segments;
-	size_t         a_segments;
-	vr_segment_t** segments;
+	size_t      n_edges;
+	size_t      a_edges;
+	vr_edge_t** edges;
 
 	size_t        n_regions;
 	size_t        a_regions;

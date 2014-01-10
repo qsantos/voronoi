@@ -24,9 +24,9 @@
 
 void vr_diagram_init(vr_diagram_t* v)
 {
-	v->n_segments = 0;
-	v->a_segments = 0;
-	v->segments   = NULL;
+	v->n_edges = 0;
+	v->a_edges = 0;
+	v->edges   = NULL;
 
 	v->n_points = 0;
 	v->a_points = 0;
@@ -58,9 +58,9 @@ void vr_diagram_exit(vr_diagram_t* v)
 	}
 	free(v->regions);
 
-	for (size_t i = 0; i < v->n_segments; i++)
-		free(v->segments[i]);
-	free(v->segments);
+	for (size_t i = 0; i < v->n_edges; i++)
+		free(v->edges[i]);
+	free(v->edges);
 
 	for (size_t i = 0; i < v->n_points; i++)
 	{
@@ -136,24 +136,24 @@ static void push_circle(vr_diagram_t* v, vr_bnode_t* n)
 	n->event = e;
 }
 
-static void push_edge(vr_region_t* a, vr_segment_t* s)
+static void region_addEdge(vr_region_t* a, vr_edge_t* e)
 {
-	a->edges = CREALLOC(a->edges, vr_segment_t*, a->n_edges+1);
-	a->edges[a->n_edges++] = s;
+	a->edges = CREALLOC(a->edges, vr_edge_t*, a->n_edges+1);
+	a->edges[a->n_edges++] = e;
 }
-static vr_segment_t* new_segment(vr_diagram_t* v, vr_region_t* a, vr_region_t* b)
+static vr_edge_t* new_edge(vr_diagram_t* v, vr_region_t* a, vr_region_t* b)
 {
-	if (v->n_segments == v->a_segments)
+	if (v->n_edges == v->a_edges)
 	{
-		v->a_segments = v->a_segments == 0 ? 1 : 2*v->a_segments;
-		v->segments = CREALLOC(v->segments, vr_segment_t*, v->a_segments);
+		v->a_edges = v->a_edges == 0 ? 1 : 2*v->a_edges;
+		v->edges = CREALLOC(v->edges, vr_edge_t*, v->a_edges);
 	}
 
-	vr_segment_t* s = CALLOC(vr_segment_t, 1);
-	*s = (vr_segment_t){{NULL, NULL}, a, b};
-	if (a != NULL) push_edge(a, s);
-	if (b != NULL) push_edge(b, s);
-	return s;
+	vr_edge_t* e = CALLOC(vr_edge_t, 1);
+	*e = (vr_edge_t){{NULL, NULL}, a, b};
+	if (a != NULL) region_addEdge(a, e);
+	if (b != NULL) region_addEdge(b, e);
+	return e;
 }
 char vr_diagram_step(vr_diagram_t* v)
 {
@@ -178,7 +178,7 @@ char vr_diagram_step(vr_diagram_t* v)
 		// current arc
 		vr_bnode_t* n = e->n;
 
-		// finish segments at breakpoints
+		// finish edges at breakpoints
 		vr_bnode_t* lb = vr_bnode_right(n);
 		vr_bnode_t* rb = vr_bnode_left (n);
 		*lb->end = e->p;
@@ -195,10 +195,10 @@ char vr_diagram_step(vr_diagram_t* v)
 		push_circle(v, pa);
 		push_circle(v, na);
 
-		// start new segment
-		vr_segment_t* s = new_segment(v, pa->r1, na->r1);
-		s->s.a = &e->p->p;
-		n->end = (vr_point_t**) &s->s.b;
+		// start new edge
+		vr_edge_t* f = new_edge(v, pa->r1, na->r1);
+		f->s.a = &e->p->p;
+		n->end = (vr_point_t**) &f->s.b;
 	}
 	else
 	{
@@ -214,17 +214,17 @@ char vr_diagram_step(vr_diagram_t* v)
 		push_circle(v, n->left);
 		push_circle(v, n->right->right);
 
-		// add segment
-		vr_segment_t* s = new_segment(v, n->r1, e->r);
-		n       ->end = (vr_point_t**) &s->s.a;
-		n->right->end = (vr_point_t**) &s->s.b;
+		// add edge
+		vr_edge_t* f = new_edge(v, n->r1, e->r);
+		n       ->end = (vr_point_t**) &f->s.a;
+		n->right->end = (vr_point_t**) &f->s.b;
 	}
 
 	free(e);
 	return 1;
 }
 
-static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
+static void finishEdges(vr_diagram_t* v, vr_bnode_t* n)
 {
 	if (n->left == NULL)
 		return;
@@ -233,8 +233,8 @@ static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
 	parabola_intersect(&p->p, &n->r1->p, &n->r2->p, v->sweepline);
 	*n->end = p;
 
-	finishSegments(v, n->left);
-	finishSegments(v, n->right);
+	finishEdges(v, n->left);
+	finishEdges(v, n->right);
 }
 static char inRect(point_t* p)
 {
@@ -265,19 +265,19 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	point_t* b = NULL;
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
-		vr_segment_t* s = r->edges[j];
-		char ak = inRect(s->s.a);
-		char bk = inRect(s->s.b);
+		vr_edge_t* e = r->edges[j];
+		char ak = inRect(e->s.a);
+		char bk = inRect(e->s.b);
 
 		if (!ak && !bk) // outside edge
 		{
 			r->n_edges--;
-			memmove(r->edges+j, r->edges+j+1, sizeof(segment_t*)*(r->n_edges-j));
+			memmove(r->edges+j, r->edges+j+1, sizeof(vr_edge_t*)*(r->n_edges-j));
 			j--;
 		}
 		else if (ak != bk) // jutting edge
 		{
-			point_t* p = !ak ? s->s.a : s->s.b;
+			point_t* p = !ak ? e->s.a : e->s.b;
 			if (a == NULL) // first jutting edge
 			{
 				// TODO
@@ -287,8 +287,8 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 				vr_point_t* np = new_point(v);
 				np->p = *p;
 				p = &np->p;
-				if (!ak) s->s.a = p;
-				else s->s.b = p;
+				if (!ak) e->s.a = p;
+				else e->s.b = p;
 				// END quickfix
 
 				a = p;
@@ -299,7 +299,7 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 			}
 
 			// crop the edge
-			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], &s->s); k++);
+			for (size_t k = 0; k < 4 && !segment_intersect(p, &border[k], &e->s); k++);
 		}
 	}
 
@@ -310,9 +310,9 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	// handle sides
 	if (a->x == b->x || a->y == b->y)
 	{
-		vr_segment_t* s = new_segment(v, r, NULL);
-		s->s.a = a;
-		s->s.b = b;
+		vr_edge_t* e = new_edge(v, r, NULL);
+		e->s.a = a;
+		e->s.b = b;
 		return;
 	}
 	// handle corners (two sides)
@@ -333,19 +333,19 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	// apply common corner correction
 	vr_point_t* np = CALLOC(vr_point_t, 1);
 	np->p = p;
-	vr_segment_t* s1 = new_segment(v, r, NULL);
-	vr_segment_t* s2 = new_segment(v, r, NULL);
-	s1->s.a = a;
-	s1->s.b = &np->p;
-	s2->s.a = &np->p;
-	s2->s.b = b;
+	vr_edge_t* e1 = new_edge(v, r, NULL);
+	vr_edge_t* e2 = new_edge(v, r, NULL);
+	e1->s.a = a;
+	e1->s.b = &np->p;
+	e2->s.a = &np->p;
+	e2->s.b = b;
 }
 void vr_diagram_end(vr_diagram_t* v)
 {
 	while (vr_diagram_step(v));
 
 	v->sweepline += 1000;
-	finishSegments(v, v->front.root);
+	finishEdges(v, v->front.root);
 
 	for (size_t i = 0; i < v->n_regions; i++)
 		vr_diagram_restrictRegion(v, v->regions[i]);
