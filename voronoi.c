@@ -221,6 +221,19 @@ char vr_diagram_step(vr_diagram_t* v)
 	return 1;
 }
 
+static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
+{
+	if (n->left == NULL)
+		return;
+
+	point_t* p = CALLOC(point_t, 1);
+	new_point(v, p);
+	parabola_intersect(p, &n->r1->p, &n->r2->p, v->sweepline);
+	*n->end = p;
+
+	finishSegments(v, n->left);
+	finishSegments(v, n->right);
+}
 /* TODO
 static char inRect(point_t* p)
 {
@@ -228,18 +241,6 @@ static char inRect(point_t* p)
 	0 < p->x && p->x < 20 &&
 	0 < p->y && p->y < 20 &&
 	1;
-}
-static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
-{
-	if (n->left == NULL)
-		return;
-
-	point_t p;
-	parabola_intersect(&p, &n->r1->p, &n->r2->p, v->sweepline);
-	*vr_diagram_id2point(v, n->end) = p;
-
-	finishSegments(v, n->left);
-	finishSegments(v, n->right);
 }
 static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 {
@@ -326,10 +327,10 @@ void vr_diagram_end(vr_diagram_t* v)
 {
 	while (vr_diagram_step(v));
 
-/* TODO
 	v->sweepline += 1000;
 	finishSegments(v, v->front.root);
 
+/* TODO
 	for (size_t i = 0; i < v->n_regions; i++)
 		vr_diagram_restrictRegion(v, v->regions[i]);
 
