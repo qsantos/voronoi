@@ -33,7 +33,6 @@ struct vr_region
 	point_t p;
 
 	size_t      n_edges;
-	size_t*     edge_ids;
 	segment_t** edges;
 };
 
@@ -46,7 +45,7 @@ struct vr_event
 	vr_region_t* r;
 
 	// circle info
-	point_t  p;
+	point_t* p;
 	vr_bnode_t* n;
 };
 
@@ -62,9 +61,13 @@ struct vr_diagram
 	vr_binbeach_t front;
 	double        sweepline;
 
-	size_t     n_segments;
-	size_t     a_segments;
-	segment_t* segments;
+	size_t    n_points;
+	size_t    a_points;
+	point_t** points;
+
+	size_t      n_segments;
+	size_t      a_segments;
+	segment_t** segments;
 };
 
 void vr_diagram_init(vr_diagram_t* v);
@@ -75,12 +78,5 @@ void vr_diagram_points(vr_diagram_t* v, size_t n, point_t* p);
 
 char vr_diagram_step(vr_diagram_t* v);
 void vr_diagram_end (vr_diagram_t* v);
-
-// fill in quick access pointers in structures:
-//   * vr_region_t.edges
-void vr_diagram_ptrs(vr_diagram_t* v);
-
-point_t*   vr_diagram_id2point  (vr_diagram_t* v, size_t id);
-segment_t* vr_diagram_id2segment(vr_diagram_t* v, size_t id);
 
 #endif

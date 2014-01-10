@@ -45,7 +45,7 @@ vr_bnode_t* vr_binbeach_breakAt(vr_binbeach_t* b, double sweep, struct vr_region
 	if (b->root == NULL)
 	{
 		vr_bnode_t* n = CALLOC(vr_bnode_t, 1);
-		*n = (vr_bnode_t){r, NULL, NULL, NULL, NULL, 0, NULL};
+		*n = (vr_bnode_t){r, NULL, NULL, NULL, NULL, NULL, NULL};
 		b->root = n;
 		return n;
 	}
@@ -65,7 +65,7 @@ vr_bnode_t* vr_binbeach_breakAt(vr_binbeach_t* b, double sweep, struct vr_region
 
 	// left leaf (original region)
 	vr_bnode_t* ll = CALLOC(vr_bnode_t, 1);
-	*ll = (vr_bnode_t){n->r1, NULL, NULL, NULL, n, 0, n->event};
+	*ll = (vr_bnode_t){n->r1, NULL, NULL, NULL, n, NULL, n->event};
 	n->left = ll;
 
 	// new internal node
@@ -73,14 +73,14 @@ vr_bnode_t* vr_binbeach_breakAt(vr_binbeach_t* b, double sweep, struct vr_region
 
 	// middle leaf (new region)
 	vr_bnode_t* ml = CALLOC(vr_bnode_t, 1);
-	*ml = (vr_bnode_t){r, NULL, NULL, NULL, ni, 0, NULL};
+	*ml = (vr_bnode_t){r, NULL, NULL, NULL, ni, NULL, NULL};
 
 	// right leaf (original region)
 	vr_bnode_t* rl = CALLOC(vr_bnode_t, 1);
-	*rl = (vr_bnode_t){n->r1, NULL, NULL, NULL, ni, 0, n->event};
+	*rl = (vr_bnode_t){n->r1, NULL, NULL, NULL, ni, NULL, n->event};
 
 	// filling new internal node
-	*ni = (vr_bnode_t){r, n->r1, ml, rl, n, 0, NULL};
+	*ni = (vr_bnode_t){r, n->r1, ml, rl, n, NULL, NULL};
 
 	// filling old leaf node (now internal)
 	n->r2    = r;

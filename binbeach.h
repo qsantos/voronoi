@@ -28,6 +28,7 @@ typedef struct vr_binbeach vr_binbeach_t;
 
 struct vr_region;
 struct vr_event;
+struct point;
 
 // internal nodes are breakpoints
 // (two regions, two children, 'end' set)
@@ -42,7 +43,7 @@ struct vr_bnode
 	vr_bnode_t* parent;
 
 	// linked point id
-	size_t end;
+	struct point** end;
 
 	struct vr_event* event;
 };

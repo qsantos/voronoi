@@ -51,16 +51,15 @@ static int poly_vert(const void* a, const void* b, void* arg)
 	double db = heading((point_t){pb->x-c->x, pb->y-c->y});
 	return da < db ? -1 : da > db ? +1 : 0;
 }
-void vr_region_points(point_t* dst, vr_region_t* r, vr_diagram_t* v)
+void vr_region_points(point_t* dst, vr_region_t* r)
 {
 	// gather vertices (twice)
 	point_t tmp[2*r->n_edges];
 	for (size_t j = 0; j < r->n_edges; j++)
 	{
-		size_t id = r->edge_ids[j];
-		segment_t* s = vr_diagram_id2segment(v, id);
-		tmp[2*j]   = s->a;
-		tmp[2*j+1] = s->b;
+		segment_t* s = r->edges[j];
+		tmp[2*j]   = *s->a;
+		tmp[2*j+1] = *s->b;
 	}
 
 	// compute mean point (inside polygon)
@@ -93,7 +92,7 @@ void vr_lloyd_relaxation(vr_diagram_t* v)
 
 		// gather vertices
 		point_t vertices[r->n_edges];
-		vr_region_points(vertices, r, v);
+		vr_region_points(vertices, r);
 
 		// compute centroid
 		point_t c = point_centroid(r->n_edges, vertices);

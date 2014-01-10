@@ -30,8 +30,8 @@ struct point
 
 struct segment
 {
-	point_t a;
-	point_t b;
+	point_t* a;
+	point_t* b;
 };
 
 point_t point_minus   (point_t a, point_t b);

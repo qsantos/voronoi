@@ -194,10 +194,10 @@ char circle_from3(point_t* c, double* r, const point_t* p1, const point_t* p2, c
 // http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
 char segment_intersect(point_t* dst, const segment_t* a, const segment_t* b)
 {
-	point_t p = a->a;
-	point_t r = point_minus(a->b,p);
-	point_t q = b->a;
-	point_t s = point_minus(b->b,q);
+	point_t p = *a->a;
+	point_t r = point_minus(*a->b,p);
+	point_t q = *b->a;
+	point_t s = point_minus(*b->b,q);
 
 	double y = point_cross(r, s);
 	if (y != 0)
