@@ -234,7 +234,6 @@ static void finishSegments(vr_diagram_t* v, vr_bnode_t* n)
 	finishSegments(v, n->left);
 	finishSegments(v, n->right);
 }
-/* TODO
 static char inRect(point_t* p)
 {
 	return
@@ -255,7 +254,7 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	{
 		{&corners[0], &corners[1]},
 		{&corners[1], &corners[2]},
-		{&corners[2], &corners[4]},
+		{&corners[2], &corners[3]},
 		{&corners[3], &corners[0]},
 	};
 
@@ -264,14 +263,14 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	point_t* b = NULL;
 	for (ssize_t j = 0; j < (ssize_t) r->n_edges; j++)
 	{
-		segment_t* s = vr_diagram_id2segment(v, r->edge_ids[j]);
+		segment_t* s = r->edges[j];
 		char ak = inRect(s->a);
 		char bk = inRect(s->b);
 
 		if (!ak && !bk)
 		{
 			r->n_edges--;
-			memmove(r->edge_ids+j, r->edge_ids+j+1, sizeof(size_t)*(r->n_edges-j));
+			memmove(r->edges+j, r->edges+j+1, sizeof(segment_t*)*(r->n_edges-j));
 			j--;
 		}
 		else if (ak != bk)
@@ -287,6 +286,8 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	if (a == NULL || b == NULL)
 		return;
 
+	(void) v;
+	/*
 	point_t p;
 	// handle sides
 	if (a->x == b->x || a->y == b->y)
@@ -321,8 +322,8 @@ static void vr_diagram_restrictRegion(vr_diagram_t* v, vr_region_t* r)
 	s1->b = &p;
 	s2->a = &p;
 	s2->b = b;
+	*/
 }
-*/
 void vr_diagram_end(vr_diagram_t* v)
 {
 	while (vr_diagram_step(v));
@@ -330,10 +331,10 @@ void vr_diagram_end(vr_diagram_t* v)
 	v->sweepline += 1000;
 	finishSegments(v, v->front.root);
 
-/* TODO
 	for (size_t i = 0; i < v->n_regions; i++)
 		vr_diagram_restrictRegion(v, v->regions[i]);
 
+/* TODO
 	v->done = 1;
 */
 }
