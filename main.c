@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#include <limits.h>
+#include <GL/glut.h>
 #include <math.h>
-#include <GL/freeglut.h>
+#include <string.h>
+#include <limits.h>
 
 #include "utils.h"
 #include "voronoi.h"
@@ -137,7 +138,7 @@ static void cb_keyboard(unsigned char c, int x, int y)
 	}
 	else if (c == ' ')
 	{
-		v.sweepline += 0.05;
+		v.sweepline += 1;
 		if (v.sweepline >= v.events.tree[0].idx)
 			vr_diagram_step(&v);
 	}
@@ -145,34 +146,64 @@ static void cb_keyboard(unsigned char c, int x, int y)
 		vr_lloyd_relaxation(&v);
 	else if (c == '\r')
 		vr_diagram_end(&v);
-	else if (c == 'a')
+	else if (c == 's')
 		for (size_t i = 0; i < 1000; i++)
 			vr_diagram_step(&v);
-	else if (c == 'z')
+	else if (c == 'd')
 		for (size_t i = 0; i < 100; i++)
 			vr_diagram_step(&v);
-	else if (c == 'e')
+	else if (c == 'f')
 		for (size_t i = 0; i < 10; i++)
 			vr_diagram_step(&v);
-	else
+	else if (c == 'g')
 		vr_diagram_step(&v);
 
 	glutPostRedisplay();
 }
 
+static void usage(const char* name)
+{
+	fprintf(stderr,
+		"Usage: %s [options] [N]\n"
+		"Computes and display a Voronoi diagram with N regions (default: 100)\n"
+		"\n"
+		"options:\n"
+		"  -h, --help        print this help\n"
+		"  -V, --version     print version information\n"
+		"  -c, --nogui       disable the gui (benchmarking)\n"
+		, name
+	);
+	exit(1);
+}
+
 int main(int argc, char** argv)
 {
-	char glEnabled = 0;
-	size_t n_points = 10000;
+	char glEnabled = 1;
+	size_t n_points = 100;
 
 	int curarg = 1;
 	if (curarg < argc)
-		n_points = atoi(argv[curarg++]);
-	if (curarg < argc)
 	{
-		glEnabled = 1;
-		curarg++;
+		const char* option = argv[curarg++];
+		if (strcmp(option, "--help") == 0 || strcmp(option, "-h") == 0)
+		{
+			usage(argv[0]);
+		}
+		else if (strcmp(option, "--version") == 0 || strcmp(option, "-V") == 0)
+		{
+			fprintf(stderr, "Voronoi version 1.0\n");
+			fprintf(stderr, "Compiled on %s at %s\n", __DATE__, __TIME__);
+			exit(1);
+		}
+		else if (strcmp(option, "--nogui") == 0 || strcmp(option, "-c") == 0)
+		{
+			glEnabled = 0;
+		}
+		else
+			curarg--;
 	}
+	if (curarg < argc)
+		n_points = atoi(argv[curarg++]);
 
 	vr_diagram_init(&v, VR_WIDTH, VR_HEIGHT);
 
