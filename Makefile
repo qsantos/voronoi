@@ -15,4 +15,7 @@ clean:
 destroy: clean
 	rm -f $(TARGETS)
 
-rebuild: destroy $(TARGETS)
+rebuild: destroy
+	@$(MAKE)
+
+.PHONY: clean destroy rebuild
